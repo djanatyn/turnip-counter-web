@@ -1,4 +1,9 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {}
+const nextConfig = {
+  transpilePackages: ["@slippilab/parser"],
+  experimental: {
+    urlImports: ["https://cdn.skypack.dev/"],
+  },
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
