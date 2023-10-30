@@ -1,0 +1,6 @@
+{
+  "https://cdn.skypack.dev/-/@shelacek/ubjson@v1.1.1-WuAw0ADjDhdVdhldnNOT/dist=es2019,mode=imports/optimized/@shelacek/ubjson.js": { "integrity": "sha512-7hfzL5+N5qOilK5qvW5Z2Xx5ssGKrfZdKBnvMTHfptzu32PamAOA0y+kgmTyIPNtjA4y91di5Zu5Sxp1E8b2Zw==", "contentType": "application/javascript; charset=utf-8" },
+  "https://cdn.skypack.dev/-/@slippilab/parser@v0.0.5-C6egaR1uS1sfQPpAIgSB/dist=es2019,mode=imports/optimized/@slippilab/parser.js": { "integrity": "sha512-fj980QXD/7ARvtyIN6dXhse7S6ipY1EBC3vpTLSAwZHyVFaZ/L1oQ/0Wrj54Jf98+T1DbupBx5VaKbpyyowL5g==", "contentType": "application/javascript; charset=utf-8" },
+  "https://cdn.skypack.dev/@slippilab/parser": { "integrity": "sha512-4Q/k6J+3ASKX81U/RiDuF5iNut3ISftT7eAZmMuDVSoOsG8KRyyAy2XMhZISCnaaB72vmGWbCJCcD2q/oQPH1w==", "contentType": "application/javascript; charset=utf-8" },
+  "version": 1
+}
