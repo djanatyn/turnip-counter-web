@@ -26,7 +26,7 @@
 
 import { NextPage } from "next";
 import { useRef, useState } from "react";
-// @ts-ignore
+// @ts-ignore experimental urlImport feature from next.js
 import { Game } from "https://cdn.skypack.dev/@slippilab/parser";
 
 // https://stackoverflow.com/a/76993906
