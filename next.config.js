@@ -4,6 +4,7 @@ const nextConfig = {
   experimental: {
     urlImports: ["https://cdn.skypack.dev/"],
   },
+  output: "export",
 };
 
 module.exports = nextConfig;

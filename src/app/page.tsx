@@ -1,8 +1,40 @@
 "use client";
 
+/* ux flow:
+ * - user is prompted to insert the connect code they want to analyze
+ * - user is prompt to select multiple slp files or directories
+ *   if any replays fail to be processed, an error is displayed
+ *   (we parse + analyze the individual replays at this step)
+ *  - processed replays can be removed by clicking an X
+ *  - when the user is done, they can click on an "analyze!" button
+ * - user is sent to a loading screen, all analysis from individual files are combined
+ * - user is sent to a results page, with the option to download the results */
+
+/* downloading result ideas:
+ * - allow downloading raw JSON of analysis
+ * - https://www.npmjs.com/package/use-react-screenshot */
+
+/* ideas of analysis to include:
+ * - count of all items pulls across all replays, matching one or more player tags
+ * - item pulls broken down into categories (stitchface, beamsword, bombs) showing the count across all replays and the expected value,
+ * - consecutive item pull highscores (you pulled a stitchface 3x in a row on friday the 13th 2023)
+ * - comparison of your percentage vs expected value is a must to see if you are unlucky. could you add a hit percentage? like how many turnips did you hit
+ * - average lifespan of turnips?
+ * - you could add a p-value with a binomial t-test to see if a player is getting significantly more stitches than expected?
+ * - maybe add a player breakdown of how many smash throws, dash throws, zdrops, regular throws if possible?
+ * - a "snipes" where a player died immediately after being hit by a weak turnip (most of those would be from off stage snipes). That might not work z-drop nair would probably count as a snipe then */
+
 import { NextPage } from "next";
 import { useRef, useState } from "react";
+// @ts-ignore
 import { Game } from "https://cdn.skypack.dev/@slippilab/parser";
+
+// https://stackoverflow.com/a/76993906
+declare module "react" {
+  interface InputHTMLAttributes<T> extends HTMLAttributes<T> {
+    webkitdirectory?: string;
+  }
+}
 
 export type GameRecord = {
   game: Game;
@@ -11,13 +43,23 @@ export type GameRecord = {
 
 const GameDisplay: React.FC<{
   games: GameRecord[];
-}> = ({ games }) => {
+  removeGame: (record: GameRecord) => void;
+}> = ({ games, removeGame }) => {
   return (
     <div>
-      <ul className="list-disc pl-4 text-lg font-mono">
+      <ul className="py-4 text-lg font-mono">
         {games.map((game, idx) => (
-          <li>
-            {game.file}
+          <li
+            key={`game-${game.file}`}
+            className="group hover:bg-pink-100 flex flex-row items-center justify-between w-full"
+          >
+            <span>{idx + 1}. {game.file}</span>
+            <button
+              className="border rounded-md group-hover:visible p-1 m-1 hover:bg-pink-500 hover:text-white invisible"
+              onClick={() => removeGame(game)}
+            >
+              Remove
+            </button>
           </li>
         ))}
       </ul>
@@ -26,8 +68,8 @@ const GameDisplay: React.FC<{
 };
 
 const TurnipCounter: NextPage = () => {
-  const directoryRef = useRef(null);
-  const fileRef = useRef(null);
+  const directoryRef = useRef<HTMLInputElement | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [games, setGames] = useState<GameRecord[]>([]);
 
@@ -44,14 +86,18 @@ const TurnipCounter: NextPage = () => {
         className="flex flex-col gap-4 w-full px-24 h-[80vh] bg-white"
         style={{
           backgroundImage: `url("/turnip-icon.png")`,
-          backgroundPositionX: "center",
-          backgroundPositionY: "1rem",
+          backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
         }}
       >
         <div className="mt-4" />
+        <p>
+          All replays are processed locally in your browser - the replays do not
+          leave your computer, and are not uploaded anywhere.
+        </p>
         {/* upload slps */}
         <div className="flex flex-row items-center justify-between w-full">
+          {/* @ts-ignore */}
           <input
             type="file"
             name="fileList"
@@ -72,14 +118,13 @@ const TurnipCounter: NextPage = () => {
           <button
             className="px-4 py-2 rounded-md border-b border-indigo-500 bg-indigo-500 text-white"
             onClick={async () => {
-              console.log("hi");
-              if (fileRef.current && fileRef.current.files) {
-                const file = await fileRef.current.files[0].arrayBuffer();
+              if (directoryRef.current && directoryRef.current.files) {
+                const file = await directoryRef.current.files[0].arrayBuffer();
                 setGames([...games, {
                   game: new Game(file),
-                  file: fileRef.current.files[0].name,
+                  file: directoryRef.current.files[0].name,
                 }]);
-                fileRef.current.value = null;
+                directoryRef.current.value = "";
               }
             }}
           >
@@ -97,7 +142,13 @@ const TurnipCounter: NextPage = () => {
             Add
           </button>
         </div>
-        <GameDisplay games={games} />
+        <GameDisplay
+          games={games}
+          removeGame={(remove: GameRecord) =>
+            setGames(
+              games.filter((game: GameRecord) => game.file != remove.file),
+            )}
+        />
       </div>
 
       {/* footer */}
