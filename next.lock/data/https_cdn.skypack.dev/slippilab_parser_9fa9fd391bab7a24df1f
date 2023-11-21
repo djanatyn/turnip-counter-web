@@ -1,0 +1,16 @@
+/*
+ * Skypack CDN - @slippilab/parser@0.0.5
+ *
+ * Learn more:
+ *   📙 Package Documentation: https://www.skypack.dev/view/@slippilab/parser
+ *   📘 Skypack Documentation: https://www.skypack.dev/docs
+ *
+ * Pinned URL: (Optimized for Production)
+ *   ▶️ Normal: https://cdn.skypack.dev/pin/@slippilab/parser@v0.0.5-C6egaR1uS1sfQPpAIgSB/mode=imports/optimized/@slippilab/parser.js
+ *   ⏩ Minified: https://cdn.skypack.dev/pin/@slippilab/parser@v0.0.5-C6egaR1uS1sfQPpAIgSB/mode=imports,min/optimized/@slippilab/parser.js
+ *
+ */
+
+// Browser-Optimized Imports (Don't directly import the URLs below in your application!)
+export * from '/-/@slippilab/parser@v0.0.5-C6egaR1uS1sfQPpAIgSB/dist=es2019,mode=imports/optimized/@slippilab/parser.js';
+export {default} from '/-/@slippilab/parser@v0.0.5-C6egaR1uS1sfQPpAIgSB/dist=es2019,mode=imports/optimized/@slippilab/parser.js';
