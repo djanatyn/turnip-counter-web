@@ -2,7 +2,7 @@
 
 like [turnip-counter](https://github.com/djanatyn/turnip-counter), but this time in the browser!
 
-- [https://turnips.djan.org]
+- https://turnips.djan.org
 
 # tools used
 
