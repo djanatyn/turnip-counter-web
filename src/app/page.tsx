@@ -99,7 +99,7 @@ const GetSlippiTag: React.FC<{
         To get started, we need to know what which players to analyze item pulls
         for.
       </p>
-      <p>Include turnip pulls by:{"  "}</p>
+      <p>Include Peach item pulls by:{"  "}</p>
       <form
         onSubmit={(e) => {
           e.preventDefault();
