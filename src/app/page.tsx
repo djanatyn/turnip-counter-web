@@ -38,7 +38,7 @@ declare module "react" {
 
 type GameRecord = {
   game: Game;
-  file: String;
+  fileName: string;
 };
 
 enum CounterStep {
@@ -60,6 +60,12 @@ const DEFAULT_STATE: State = {
   step: CounterStep.GetSlippiTag,
   matchingTags: [],
   parsedReplays: [],
+};
+
+// attempt to parse an slp replay from a File entry
+const parseReplay = (file: File): GameRecord | null => {
+  const game = new Game(file.arrayBuffer());
+  return game ? { game, fileName: file.name } : null;
 };
 
 const GetSlippiTag: React.FC<{
@@ -91,10 +97,10 @@ const GameDisplay: React.FC<{
       <ul className="py-4 text-lg font-mono">
         {games.map((game, idx) => (
           <li
-            key={`game-${game.file}`}
+            key={`game-${game.fileName}`}
             className="group hover:bg-pink-100 flex flex-row items-center justify-between w-full"
           >
-            <span>{idx + 1}. {game.file}</span>
+            <span>{idx + 1}. {game.fileName}</span>
             <button
               className="border rounded-md group-hover:visible p-1 m-1 hover:bg-pink-500 hover:text-white invisible"
               onClick={() => removeGame(game)}
@@ -239,7 +245,9 @@ const Body: React.FC<{
         games={games}
         removeGame={(remove: GameRecord) =>
           setGames(
-            games.filter((game: GameRecord) => game.file != remove.file),
+            games.filter((game: GameRecord) =>
+              game.fileName != remove.fileName
+            ),
           )}
       />
     </div>
