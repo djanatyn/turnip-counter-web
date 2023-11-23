@@ -36,7 +36,7 @@ declare module "react" {
   }
 }
 
-export type GameRecord = {
+type GameRecord = {
   game: Game;
   file: String;
 };
