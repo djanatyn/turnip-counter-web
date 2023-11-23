@@ -79,20 +79,38 @@ const GetSlippiTag: React.FC<{
       setTags([...tags, newTag]);
     }
   };
+
   const removeTag = (removedTag: string) =>
     setTags(tags.filter((tag: string) => tag != removedTag));
 
   const addTagDisabled: boolean = tags.includes(currentText);
 
+  const nextStepDisabled: boolean = tags.length == 0;
+
+  // show a placeholder when user has no input
+  const placeholder: string | undefined = tags.length == 0
+    ? "FIZZI#36"
+    : undefined;
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 w-full items-center">
+      <p className="text-xl font-bold">
+        To get started, we need to know what which players to analyze item pulls
+        for.
+      </p>
       <p>Include turnip pulls by:{"  "}</p>
-      <div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          addTag(currentText);
+        }}
+      >
         <input
           type="text"
           className="border border-b p-1"
           onChange={({ target: { value } }) => setCurrentText(value)}
           value={currentText}
+          placeholder={placeholder}
         />
         <button
           className={`bg-pink-500 p-2 rounded-md text-white font-bold mx-2 ${
@@ -105,12 +123,20 @@ const GetSlippiTag: React.FC<{
         >
           Add
         </button>
-      </div>
+      </form>
       <TagDisplay
         tags={tags}
         removeTag={removeTag}
       />
-      {/* TODO: add button to move onto next step (validate at least one name selected) */}
+      <button
+        className={`bg-pink-500 p-2 rounded-md text-white font-bold mx-2 ${
+          nextStepDisabled ? "opacity-50" : ""
+        }`}
+        disabled={nextStepDisabled}
+        onClick={() => nextStep(tags)}
+      >
+        Select Replays
+      </button>
     </div>
   );
 };
@@ -216,7 +242,8 @@ const SelectReplays: React.FC<{}> = () => {
 
 const Header: React.FC<{}> = () => {
   return (
-    <div className="w-full min-h-fit h-[10vh] bg-pink-200 overflow-auto flex flex-row gap-8 justify-center items-center">
+    <div className="w-full min-h-fit h-[10vh] bg-pink-200 overflow-auto flex flex-row gap-4 justify-center items-center">
+      <img src="/turnip-icon.png" />
       <p className="text-4xl font-bold">Turnip Counter</p>
       <p className="text-xl">Analyze Melee Peach Item Pull RNG</p>
     </div>
@@ -280,14 +307,7 @@ const Body: React.FC<{
   })();
 
   return (
-    <div
-      className="flex flex-col gap-4 w-full px-24 h-[80vh] bg-white"
-      style={{
-        backgroundImage: `url("/turnip-icon.png")`,
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
+    <div className="flex flex-col gap-4 w-full px-24 h-[80vh] bg-white">
       <div className="mt-4" />
       <p>
         All replays are processed locally in your browser - the replays do not
