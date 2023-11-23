@@ -71,19 +71,72 @@ const parseReplay = (file: File): GameRecord | null => {
 const GetSlippiTag: React.FC<{
   nextStep: (tags: string[]) => void;
 }> = ({ nextStep }) => {
+  const [currentText, setCurrentText] = useState<string>("");
+  const [tags, setTags] = useState<string[]>([]);
+
+  const addTag = (newTag: string) => {
+    if (!tags.includes(newTag)) {
+      setTags([...tags, newTag]);
+    }
+  };
+  const removeTag = (removedTag: string) =>
+    setTags(tags.filter((tag: string) => tag != removedTag));
+
+  const addTagDisabled: boolean = tags.includes(currentText);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p>Include turnip pulls by:{"  "}</p>
+      <div>
+        <input
+          type="text"
+          className="border border-b p-1"
+          onChange={({ target: { value } }) => setCurrentText(value)}
+          value={currentText}
+        />
+        <button
+          className={`bg-pink-500 p-2 rounded-md text-white font-bold mx-2 ${
+            addTagDisabled ? "opacity-50" : ""
+          }`}
+          disabled={addTagDisabled}
+          onClick={() => {
+            addTag(currentText);
+          }}
+        >
+          Add
+        </button>
+      </div>
+      <TagDisplay
+        tags={tags}
+        removeTag={removeTag}
+      />
+      {/* TODO: add button to move onto next step (validate at least one name selected) */}
+    </div>
+  );
+};
+
+const TagDisplay: React.FC<{
+  tags: string[];
+  removeTag: (tag: string) => void;
+}> = ({ tags, removeTag }) => {
   return (
     <div>
-      <p>Include turnip pulls by:{"  "}</p>
-      <input
-        type="text"
-        className="border border-b p-1"
-        defaultValue="ACAB#420"
-      />
-      <button className="bg-pink-500 p-2 rounded-md text-white font-bold">
-        Add
-      </button>
-      {/* TODO: display names selected */}
-      {/* TODO: add button to move onto next step (validate at least one name selected) */}
+      <ul className="py-4 text-lg font-mono">
+        {tags.map((tag, idx) => (
+          <li
+            key={`tag-${tag}`}
+            className="group hover:bg-pink-100 flex flex-row items-center justify-between w-full"
+          >
+            <span>{idx + 1}. {tag}</span>
+            <button
+              className="border rounded-md group-hover:visible p-1 m-1 hover:bg-pink-500 hover:text-white invisible"
+              onClick={() => removeTag(tag)}
+            >
+              Remove
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
@@ -240,7 +293,9 @@ const Body: React.FC<{
         All replays are processed locally in your browser - the replays do not
         leave your computer, and are not uploaded anywhere.
       </p>
-      {activeStep}
+      <div className="flex flex-col items-center mt-4">
+        {activeStep}
+      </div>
       <GameDisplay
         games={games}
         removeGame={(remove: GameRecord) =>
