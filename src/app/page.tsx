@@ -173,6 +173,23 @@ const Body: React.FC<{
   state: CounterState;
   setState: (state: CounterState) => void;
 }> = ({ games, setGames, state, setState }) => {
+  let activeStep: JSX.Element = (() => {
+    switch (state) {
+      case CounterState.GetSlippiTag: {
+        return <GetSlippiTag />;
+      }
+      case CounterState.LoadSLPFiles: {
+        return <p>load slp files</p>;
+      }
+      case CounterState.AnalyzeReplays: {
+        return <p>analyze replays</p>;
+      }
+      case CounterState.DisplayResults: {
+        return <p>display results</p>;
+      }
+    }
+  })();
+
   return (
     <div
       className="flex flex-col gap-4 w-full px-24 h-[80vh] bg-white"
@@ -187,6 +204,7 @@ const Body: React.FC<{
         All replays are processed locally in your browser - the replays do not
         leave your computer, and are not uploaded anywhere.
       </p>
+      {activeStep}
       <GameDisplay
         games={games}
         removeGame={(remove: GameRecord) =>
