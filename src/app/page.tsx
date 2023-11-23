@@ -41,14 +41,30 @@ export type GameRecord = {
   file: String;
 };
 
-enum CounterState {
+enum CounterStep {
   GetSlippiTag,
   LoadSLPFiles,
   AnalyzeReplays,
   DisplayResults,
 }
 
-const GetSlippiTag: React.FC<{}> = () => {
+type State = {
+  step: CounterStep;
+  // which slippi tags are we using to filter players?
+  matchingTags: string[];
+  // all parsed replays
+  parsedReplays: GameRecord[];
+};
+
+const DEFAULT_STATE: State = {
+  step: CounterStep.GetSlippiTag,
+  matchingTags: [],
+  parsedReplays: [],
+};
+
+const GetSlippiTag: React.FC<{
+  nextStep: (tags: string[]) => void;
+}> = ({ nextStep }) => {
   return (
     <div>
       <p>Include turnip pulls by:{"  "}</p>
@@ -60,6 +76,8 @@ const GetSlippiTag: React.FC<{}> = () => {
       <button className="bg-pink-500 p-2 rounded-md text-white font-bold">
         Add
       </button>
+      {/* TODO: display names selected */}
+      {/* TODO: add button to move onto next step (validate at least one name selected) */}
     </div>
   );
 };
@@ -170,22 +188,34 @@ const Footer: React.FC<{}> = () => {
 const Body: React.FC<{
   games: GameRecord[];
   setGames: (games: GameRecord[]) => void;
-  state: CounterState;
-  setState: (state: CounterState) => void;
+  state: State;
+  setState: (updated: State) => void;
 }> = ({ games, setGames, state, setState }) => {
   let activeStep: JSX.Element = (() => {
-    switch (state) {
-      case CounterState.GetSlippiTag: {
-        return <GetSlippiTag />;
+    switch (state.step) {
+      case CounterStep.GetSlippiTag: {
+        return (
+          <GetSlippiTag
+            nextStep={(tags: string[]) =>
+              setState({
+                ...state,
+                step: CounterStep.LoadSLPFiles,
+                matchingTags: tags,
+              })}
+          />
+        );
       }
-      case CounterState.LoadSLPFiles: {
+      case CounterStep.LoadSLPFiles: {
         return <p>load slp files</p>;
       }
-      case CounterState.AnalyzeReplays: {
+      case CounterStep.AnalyzeReplays: {
         return <p>analyze replays</p>;
       }
-      case CounterState.DisplayResults: {
+      case CounterStep.DisplayResults: {
         return <p>display results</p>;
+      }
+      default: {
+        return <p>fatal error</p>;
       }
     }
   })();
@@ -218,7 +248,7 @@ const Body: React.FC<{
 
 const TurnipCounter: NextPage = () => {
   const [games, setGames] = useState<GameRecord[]>([]);
-  const [state, setState] = useState<CounterState>(CounterState.GetSlippiTag);
+  const [state, setState] = useState<State>(DEFAULT_STATE);
 
   return (
     <main className="min-h-screen flex flex-col items-center">
