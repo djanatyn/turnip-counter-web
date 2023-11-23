@@ -75,7 +75,8 @@ const GetSlippiTag: React.FC<{
   const [tags, setTags] = useState<string[]>([]);
 
   const addTag = (newTag: string) => {
-    if (!tags.includes(newTag)) {
+    if (newTag !== "" && !tags.includes(newTag)) {
+      setCurrentText("");
       setTags([...tags, newTag]);
     }
   };
