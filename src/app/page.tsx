@@ -63,17 +63,25 @@ const DEFAULT_STATE: State = {
 };
 
 // attempt to parse an slp replay from a File entry
-const parseReplay = (file: File): GameRecord | null => {
-  const game = new Game(file.arrayBuffer());
-  return game ? { game, fileName: file.name } : null;
+const parseReplay = async (file: File): GameRecord | string => {
+  const contents = await file.arrayBuffer();
+  try {
+    const game = new Game(contents);
+    return game ? { game, fileName: file.name } : "unknown error occurred";
+  } catch (e) {
+    return e.message;
+  }
 };
 
 const GetSlippiTag: React.FC<{
   nextStep: (tags: string[]) => void;
   startingTags: string[];
 }> = ({ nextStep, startingTags }) => {
+  // TODO move to top-level state
+  // ---
   const [currentText, setCurrentText] = useState<string>("");
   const [tags, setTags] = useState<string[]>(startingTags);
+  // ---
 
   const addTag = (newTag: string) => {
     if (newTag !== "" && !tags.includes(newTag)) {
@@ -196,11 +204,18 @@ const GameDisplay: React.FC<{
 };
 
 const SelectReplays: React.FC<{
-  nextStep: (records: GameRecord[]) => void;
+  gameRecords: GameRecord[];
+  addGameRecord: (record: GameRecord) => void;
+  logMessages: string[];
+  log: (msg: string) => void;
+  nextStep: () => void;
   previousStep: () => void;
 }> = ({ nextStep, previousStep }) => {
+  // TODO move into top-level state
+  // ---
   const [gameRecords, setGameRecords] = useState<GameRecord[]>([]);
   const [logMessages, setLogMessages] = useState<string[]>([]);
+  // ---
 
   const directoryRef = useRef<HTMLInputElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -209,7 +224,7 @@ const SelectReplays: React.FC<{
   const logWindow: JSX.Element | null = logMessages.length === 0
     ? null
     : (
-      <div className="border border-b m-4 p-4 bg-gray-100 font-mono h-32 overflow-y-auto">
+      <div className="border border-b m-4 p-4 bg-gray-100 font-mono h-64 overflow-y-auto">
         {logMessages.map((msg: string, idx) => <p key={`log-${idx}`}>{msg}</p>)}
         <div ref={logEnd} />
       </div>
@@ -220,6 +235,8 @@ const SelectReplays: React.FC<{
     logEnd.current?.scrollIntoView({ behavior: "smooth" });
   }, [logMessages]);
 
+  const log = (msg: string) => setLogMessages([...logMessages, msg]);
+
   return (
     <div className="w-[50vw]">
       <p className="text-xl font-bold my-2">
@@ -229,6 +246,24 @@ const SelectReplays: React.FC<{
         You can select individual replay files, or a directory of replay files.
       </p>
       <div className="flex flex-row items-center justify-between w-full">
+        <input
+          type="file"
+          id="replayDataFile"
+          ref={fileRef}
+          onChange={async (e) => {
+            if (fileRef.current && fileRef.current?.files[0]) {
+              const target = fileRef.current.files[0];
+              log(`loading ${target.name}`);
+              const result: GameRecord | string = await parseReplay(target);
+              if (typeof result === "string") {
+                log(`failed to load "${target.name}": ${result}`);
+              } else {
+                log(`parsed "${result.fileName}" successfully`);
+                setGameRecords([...gameRecords, result]);
+              }
+            }
+          }}
+        />
         {/* @ts-ignore */}
         <input
           type="file"
@@ -237,41 +272,19 @@ const SelectReplays: React.FC<{
           id="replayDataDirectory"
           ref={directoryRef}
         />
-        <button
-          className="px-4 py-2 rounded-md border-b border-indigo-500 bg-indigo-500 text-white"
-          onClick={() => {
-            setLogMessages([...logMessages, "clicked directory import"]);
-          }}
-        >
-          Add Replays from Directory
-        </button>
-      </div>
-      <div className="flex flex-row items-center justify-between w-full">
-        <input
-          type="file"
-          id="replayDataFile"
-          ref={fileRef}
-        />
-        <button
-          className="px-4 py-2 mt-4 rounded-md border-b border-indigo-500 bg-indigo-500 text-white"
-          onClick={async () => {
-            {
-              setLogMessages([...logMessages, "clicked file import"]);
-              /* if (directoryRef.current && directoryRef.current.files) {
-              const file = await directoryRef.current.files[0].arrayBuffer();
-              setGames([...games, {
-              game: new Game(file),
-              file: directoryRef.current.files[0].name,
-              }]);
-              directoryRef.current.value = "";
-              } */
-            }
-          }}
-        >
-          Add Replay File
-        </button>
       </div>
       {logWindow}
+      <GameDisplay
+        games={gameRecords}
+        removeGame={(remove: GameRecord) => {
+          setGameRecords(
+            gameRecords.filter((game: GameRecord) =>
+              game.fileName != remove.fileName
+            ),
+          );
+          log(`removed "${remove.fileName}`);
+        }}
+      />
       <div className="flex flex-row items-center justify-between w-full">
         <button
           className="px-4 py-2 mt-4 rounded-md border-b border-orange-500 bg-orange-500 text-white font-bold"
@@ -387,15 +400,6 @@ const Body: React.FC<{
       <div className="flex flex-col items-center mt-4">
         {activeStep}
       </div>
-      <GameDisplay
-        games={games}
-        removeGame={(remove: GameRecord) =>
-          setGames(
-            games.filter((game: GameRecord) =>
-              game.fileName != remove.fileName
-            ),
-          )}
-      />
     </div>
   );
 };
