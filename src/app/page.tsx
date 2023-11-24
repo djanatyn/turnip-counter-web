@@ -25,7 +25,7 @@
  * - a "snipes" where a player died immediately after being hit by a weak turnip (most of those would be from off stage snipes). That might not work z-drop nair would probably count as a snipe then */
 
 import { NextPage } from "next";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 // @ts-ignore experimental urlImport feature from next.js
 import { Game } from "https://cdn.skypack.dev/@slippilab/parser";
 
@@ -200,9 +200,24 @@ const SelectReplays: React.FC<{
   previousStep: () => void;
 }> = ({ nextStep, previousStep }) => {
   const [gameRecords, setGameRecords] = useState<GameRecord[]>([]);
+  const [logMessages, setLogMessages] = useState<string[]>([]);
 
   const directoryRef = useRef<HTMLInputElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const logEnd = useRef<HTMLDivElement | null>(null);
+
+  const logWindow: JSX.Element | null = logMessages.length === 0
+    ? null
+    : (
+      <div className="border border-b m-4 p-4 bg-gray-100 font-mono h-32 overflow-y-auto">
+        {logMessages.map((msg: string) => <p>{msg}</p>)}
+        <div ref={logEnd} />
+      </div>
+    );
+
+  useEffect(() => {
+    logEnd.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logMessages]);
 
   return (
     <div className="w-[50vw]">
@@ -221,7 +236,12 @@ const SelectReplays: React.FC<{
           id="replayDataDirectory"
           ref={directoryRef}
         />
-        <button className="px-4 py-2 rounded-md border-b border-indigo-500 bg-indigo-500 text-white">
+        <button
+          className="px-4 py-2 rounded-md border-b border-indigo-500 bg-indigo-500 text-white"
+          onClick={() => {
+            setLogMessages([...logMessages, "clicked directory import"]);
+          }}
+        >
           Add Replays from Directory
         </button>
       </div>
@@ -235,6 +255,7 @@ const SelectReplays: React.FC<{
           className="px-4 py-2 mt-4 rounded-md border-b border-indigo-500 bg-indigo-500 text-white"
           onClick={async () => {
             {
+              setLogMessages([...logMessages, "clicked file import"]);
               /* if (directoryRef.current && directoryRef.current.files) {
               const file = await directoryRef.current.files[0].arrayBuffer();
               setGames([...games, {
@@ -249,6 +270,7 @@ const SelectReplays: React.FC<{
           Add Replay File
         </button>
       </div>
+      {logWindow}
       <div className="flex flex-row items-center justify-between w-full">
         <button
           className="px-4 py-2 mt-4 rounded-md border-b border-orange-500 bg-orange-500 text-white font-bold"
