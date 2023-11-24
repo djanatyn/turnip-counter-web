@@ -209,7 +209,7 @@ const SelectReplays: React.FC<{
       <p className="text-xl font-bold my-2">
         Next, select the replay files you want to analyze.
       </p>
-      <p className="text-xl font-bold my-2">
+      <p className="text-lg my-2">
         You can select individual replay files, or a directory of replay files.
       </p>
       <div className="flex flex-row items-center justify-between w-full">
