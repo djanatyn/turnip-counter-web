@@ -210,11 +210,12 @@ const SelectReplays: React.FC<{
     ? null
     : (
       <div className="border border-b m-4 p-4 bg-gray-100 font-mono h-32 overflow-y-auto">
-        {logMessages.map((msg: string) => <p>{msg}</p>)}
+        {logMessages.map((msg: string, idx) => <p key={`log-${idx}`}>{msg}</p>)}
         <div ref={logEnd} />
       </div>
     );
 
+  // scroll to bottom of log when a new message is added
   useEffect(() => {
     logEnd.current?.scrollIntoView({ behavior: "smooth" });
   }, [logMessages]);
