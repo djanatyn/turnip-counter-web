@@ -70,9 +70,10 @@ const parseReplay = (file: File): GameRecord | null => {
 
 const GetSlippiTag: React.FC<{
   nextStep: (tags: string[]) => void;
-}> = ({ nextStep }) => {
+  startingTags: string[];
+}> = ({ nextStep, startingTags }) => {
   const [currentText, setCurrentText] = useState<string>("");
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>(startingTags);
 
   const addTag = (newTag: string) => {
     if (newTag !== "" && !tags.includes(newTag)) {
@@ -148,7 +149,7 @@ const TagDisplay: React.FC<{
 }> = ({ tags, removeTag }) => {
   return (
     <div>
-      <ul className="py-4 text-lg font-mono">
+      <ul className="py-4 text-lg font-mono w-full">
         {tags.map((tag, idx) => (
           <li
             key={`tag-${tag}`}
@@ -194,12 +195,23 @@ const GameDisplay: React.FC<{
   );
 };
 
-const SelectReplays: React.FC<{}> = () => {
+const SelectReplays: React.FC<{
+  nextStep: (records: GameRecord[]) => void;
+  previousStep: () => void;
+}> = ({ nextStep, previousStep }) => {
+  const [gameRecords, setGameRecords] = useState<GameRecord[]>([]);
+
   const directoryRef = useRef<HTMLInputElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   return (
-    <>
+    <div className="w-[50vw]">
+      <p className="text-xl font-bold my-2">
+        Next, select the replay files you want to analyze.
+      </p>
+      <p className="text-xl font-bold my-2">
+        You can select individual replay files, or a directory of replay files.
+      </p>
       <div className="flex flex-row items-center justify-between w-full">
         {/* @ts-ignore */}
         <input
@@ -220,7 +232,7 @@ const SelectReplays: React.FC<{}> = () => {
           ref={fileRef}
         />
         <button
-          className="px-4 py-2 rounded-md border-b border-indigo-500 bg-indigo-500 text-white"
+          className="px-4 py-2 mt-4 rounded-md border-b border-indigo-500 bg-indigo-500 text-white"
           onClick={async () => {
             {
               /* if (directoryRef.current && directoryRef.current.files) {
@@ -237,7 +249,32 @@ const SelectReplays: React.FC<{}> = () => {
           Add Replay File
         </button>
       </div>
-    </>
+      <div className="flex flex-row items-center justify-between w-full">
+        <button
+          className="px-4 py-2 mt-4 rounded-md border-b border-orange-500 bg-orange-500 text-white font-bold"
+          onClick={previousStep}
+        >
+          Configure Tags
+        </button>
+        <button
+          className="px-4 py-2 mt-4 rounded-md border-b border-pink-500 bg-pink-500 text-white font-bold"
+          onClick={async () => {
+            {
+              /* if (directoryRef.current && directoryRef.current.files) {
+            const file = await directoryRef.current.files[0].arrayBuffer();
+            setGames([...games, {
+            game: new Game(file),
+            file: directoryRef.current.files[0].name,
+            }]);
+            directoryRef.current.value = "";
+            } */
+            }
+          }}
+        >
+          Analyze Replays
+        </button>
+      </div>
+    </div>
   );
 };
 
@@ -283,6 +320,7 @@ const Body: React.FC<{
       case CounterStep.GetSlippiTag: {
         return (
           <GetSlippiTag
+            startingTags={state.matchingTags}
             nextStep={(tags: string[]) =>
               setState({
                 ...state,
@@ -293,7 +331,16 @@ const Body: React.FC<{
         );
       }
       case CounterStep.LoadSLPFiles: {
-        return <p>load slp files</p>;
+        return (
+          <SelectReplays
+            nextStep={(records: GameRecord[]) => console.log("TODO")}
+            previousStep={() =>
+              setState({
+                ...state,
+                step: CounterStep.GetSlippiTag,
+              })}
+          />
+        );
       }
       case CounterStep.AnalyzeReplays: {
         return <p>analyze replays</p>;
