@@ -98,7 +98,8 @@ const GetSlippiTag: React.FC<{
   // TODO move to top-level state
   const [currentText, setCurrentText] = useState<string>("");
 
-  const addTagDisabled: boolean = tags.includes(currentText);
+  const addTagDisabled: boolean = tags.includes(currentText) ||
+    currentText === "";
   const nextStepDisabled: boolean = tags.length == 0;
 
   // show a placeholder when user has no input
@@ -116,7 +117,10 @@ const GetSlippiTag: React.FC<{
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          addTag(currentText);
+          if (!addTagDisabled) {
+            addTag(currentText);
+            setCurrentText("");
+          }
         }}
       >
         <input
@@ -132,7 +136,10 @@ const GetSlippiTag: React.FC<{
           }`}
           disabled={addTagDisabled}
           onClick={() => {
-            addTag(currentText);
+            if (!addTagDisabled) {
+              addTag(currentText);
+              setCurrentText("");
+            }
           }}
         >
           Add
@@ -208,6 +215,7 @@ const GameDisplay: React.FC<{
 };
 
 const SelectReplays: React.FC<{
+  tags: string[];
   gameRecords: GameRecord[];
   addGameRecord: (record: GameRecord) => void;
   removeGameRecord: (removed: GameRecord) => void;
@@ -217,6 +225,7 @@ const SelectReplays: React.FC<{
   previousStep: () => void;
 }> = (
   {
+    tags,
     gameRecords,
     addGameRecord,
     removeGameRecord,
@@ -246,6 +255,12 @@ const SelectReplays: React.FC<{
 
   return (
     <div className="w-[50vw]">
+      <p>Searching replays for:</p>
+      <ul className="list-disc pl-4">
+        {tags.map((tag: string) => (
+          <li key={`tag-${tag}`} className="font-mono">{tag}</li>
+        ))}
+      </ul>
       <p className="text-xl font-bold my-2">
         Next, select the replay files you want to analyze.
       </p>
@@ -260,7 +275,6 @@ const SelectReplays: React.FC<{
           onChange={async (e) => {
             if (fileRef.current && fileRef.current.files !== null) {
               const target = fileRef.current.files[0];
-              log(`loading "${target.name}"`);
               const result: Result<GameRecord, string> = await parseReplay(
                 target,
               );
@@ -402,6 +416,7 @@ const Body: React.FC<{
       case CounterStep.LoadSLPFiles: {
         return (
           <SelectReplays
+            tags={state.matchingTags}
             gameRecords={state.gameRecords}
             addGameRecord={(game: GameRecord) => {
               setState((oldState: State) => {
