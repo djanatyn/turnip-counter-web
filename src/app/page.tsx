@@ -25,7 +25,6 @@
  * - a "snipes" where a player died immediately after being hit by a weak turnip (most of those would be from off stage snipes). That might not work z-drop nair would probably count as a snipe then */
 
 import { NextPage } from "next";
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 // @ts-ignore experimental urlImport feature from next.js
 import { Game } from "https://cdn.skypack.dev/@slippilab/parser";
@@ -321,7 +320,7 @@ const SelectReplays: React.FC<{
 const Header: React.FC<{}> = () => {
   return (
     <div className="w-full min-h-fit h-[10vh] bg-pink-200 overflow-auto flex flex-row gap-4 justify-center items-center">
-      <Image src="/turnip-icon.png" alt="" />
+      <img src="/turnip-icon.png" alt="" />
       <p className="text-4xl font-bold">Turnip Counter</p>
       <p className="text-xl">Analyze Melee Peach Item Pull RNG</p>
     </div>
