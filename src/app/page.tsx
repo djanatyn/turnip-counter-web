@@ -95,7 +95,6 @@ const GetSlippiTag: React.FC<{
   removeTag: (removed: string) => void;
   nextStep: () => void;
 }> = ({ tags, addTag, removeTag, nextStep }) => {
-  // TODO move to top-level state
   const [currentText, setCurrentText] = useState<string>("");
 
   const addTagDisabled: boolean = tags.includes(currentText) ||
