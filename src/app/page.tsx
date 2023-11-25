@@ -93,7 +93,7 @@ const GetSlippiTag: React.FC<{
   tags: string[];
   addTag: (newTag: string) => void;
   removeTag: (removed: string) => void;
-  nextStep: (tags: string[]) => void;
+  nextStep: () => void;
 }> = ({ tags, addTag, removeTag, nextStep }) => {
   // TODO move to top-level state
   const [currentText, setCurrentText] = useState<string>("");
@@ -402,12 +402,11 @@ const Body: React.FC<{
             tags={state.matchingTags}
             addTag={addTag}
             removeTag={removeTag}
-            nextStep={(tags: string[]) =>
+            nextStep={() =>
               setState((oldState: State) => {
                 return {
                   ...oldState,
                   step: CounterStep.LoadSLPFiles,
-                  matchingTags: tags,
                 };
               })}
           />
