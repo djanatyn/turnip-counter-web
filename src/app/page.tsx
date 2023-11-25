@@ -366,6 +366,20 @@ const Body: React.FC<{
   state: State;
   setState: (update: (oldState: State) => State) => void;
 }> = ({ games, setGames, state, setState }) => {
+  const log = (msg: string) =>
+    setState((oldState: State) => {
+      return {
+        ...oldState,
+        logMessages: [...oldState.logMessages, msg],
+      };
+    });
+
+  const setStep = (step: CounterStep) => {
+    setState((oldState: State) => {
+      return { ...oldState, step };
+    });
+  };
+
   const addTag = (newTag: string) =>
     setState((oldState: State) => {
       const alreadyAdded: boolean = oldState.matchingTags.includes(newTag);
@@ -385,18 +399,28 @@ const Body: React.FC<{
       };
     });
 
-  const log = (msg: string) =>
+  const addGameRecord = (game: GameRecord) => {
+    setState((oldState: State) => {
+      const alreadyAdded = oldState.gameRecords.some((
+        addedGame: GameRecord,
+      ) => addedGame.fileName == game.fileName);
+      return alreadyAdded ? oldState : {
+        ...oldState,
+        gameRecords: [...oldState.gameRecords, game],
+      };
+    });
+  };
+
+  const removeGameRecord = (removed: GameRecord) => {
     setState((oldState: State) => {
       return {
         ...oldState,
-        logMessages: [...oldState.logMessages, msg],
+        gameRecords: oldState.gameRecords.filter((game: GameRecord) =>
+          game.fileName != removed.fileName
+        ),
       };
     });
-
-  const setStep = (step: CounterStep) => {
-    setState((oldState: State) => {
-      return { ...oldState, step };
-    });
+    log(`removed "${removed.fileName}`);
   };
 
   const activeStep: JSX.Element = (() => {
@@ -416,28 +440,8 @@ const Body: React.FC<{
           <SelectReplays
             tags={state.matchingTags}
             gameRecords={state.gameRecords}
-            addGameRecord={(game: GameRecord) => {
-              setState((oldState: State) => {
-                const alreadyAdded = oldState.gameRecords.some((
-                  addedGame: GameRecord,
-                ) => addedGame.fileName == game.fileName);
-                return alreadyAdded ? oldState : {
-                  ...oldState,
-                  gameRecords: [...oldState.gameRecords, game],
-                };
-              });
-            }}
-            removeGameRecord={(removed: GameRecord) => {
-              setState((oldState: State) => {
-                return {
-                  ...oldState,
-                  gameRecords: oldState.gameRecords.filter((game: GameRecord) =>
-                    game.fileName != removed.fileName
-                  ),
-                };
-              });
-              log(`removed "${removed.fileName}`);
-            }}
+            addGameRecord={addGameRecord}
+            removeGameRecord={removeGameRecord}
             logMessages={state.logMessages}
             log={log}
             nextStep={() => setStep(CounterStep.AnalyzeReplays)}
