@@ -393,6 +393,12 @@ const Body: React.FC<{
       };
     });
 
+  const setStep = (step: CounterStep) => {
+    setState((oldState: State) => {
+      return { ...oldState, step };
+    });
+  };
+
   const activeStep: JSX.Element = (() => {
     switch (state.step) {
       case CounterStep.GetSlippiTag: {
@@ -401,13 +407,7 @@ const Body: React.FC<{
             tags={state.matchingTags}
             addTag={addTag}
             removeTag={removeTag}
-            nextStep={() =>
-              setState((oldState: State) => {
-                return {
-                  ...oldState,
-                  step: CounterStep.LoadSLPFiles,
-                };
-              })}
+            nextStep={() => setStep(CounterStep.LoadSLPFiles)}
           />
         );
       }
@@ -440,14 +440,8 @@ const Body: React.FC<{
             }}
             logMessages={state.logMessages}
             log={log}
-            nextStep={() => console.log("TODO")}
-            previousStep={() =>
-              setState((oldState: State) => {
-                return {
-                  ...oldState,
-                  step: CounterStep.GetSlippiTag,
-                };
-              })}
+            nextStep={() => setStep(CounterStep.AnalyzeReplays)}
+            previousStep={() => setStep(CounterStep.GetSlippiTag)}
           />
         );
       }
