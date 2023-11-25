@@ -318,7 +318,7 @@ const SelectReplays: React.FC<{
                   );
                 }
               }
-              log(`finished processing ${length} files from ${directory}`);
+              log(`finished processing ${length} files from "${directory}"`);
             }
           }}
         />
