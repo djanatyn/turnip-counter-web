@@ -192,7 +192,7 @@ const GameDisplay: React.FC<{
   removeGame: (record: GameRecord) => void;
 }> = ({ games, removeGame }) => {
   return (
-    <div className="overflow-auto h-64">
+    <div className="overflow-auto max-h-64">
       <ul className="py-4 text-lg font-mono">
         {games.map((game, idx) => (
           <li
