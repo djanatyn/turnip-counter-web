@@ -375,9 +375,10 @@ const Body: React.FC<{
     });
 
   const setStep = (step: CounterStep) => {
-    setState((oldState: State) => {
-      return { ...oldState, step };
-    });
+    return () =>
+      setState((oldState: State) => {
+        return { ...oldState, step };
+      });
   };
 
   const addTag = (newTag: string) =>
@@ -431,7 +432,7 @@ const Body: React.FC<{
             tags={state.matchingTags}
             addTag={addTag}
             removeTag={removeTag}
-            nextStep={() => setStep(CounterStep.LoadSLPFiles)}
+            nextStep={setStep(CounterStep.LoadSLPFiles)}
           />
         );
       }
@@ -444,8 +445,8 @@ const Body: React.FC<{
             removeGameRecord={removeGameRecord}
             logMessages={state.logMessages}
             log={log}
-            nextStep={() => setStep(CounterStep.AnalyzeReplays)}
-            previousStep={() => setStep(CounterStep.GetSlippiTag)}
+            nextStep={setStep(CounterStep.AnalyzeReplays)}
+            previousStep={setStep(CounterStep.GetSlippiTag)}
           />
         );
       }
