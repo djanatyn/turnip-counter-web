@@ -153,7 +153,7 @@ const GetSlippiTag: React.FC<{
           nextStepDisabled ? "opacity-50" : ""
         }`}
         disabled={nextStepDisabled}
-        onClick={() => nextStep(tags)}
+        onClick={nextStep}
       >
         Select Replays
       </button>
