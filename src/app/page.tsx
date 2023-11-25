@@ -191,6 +191,13 @@ const GameDisplay: React.FC<{
   games: GameRecord[];
   removeGame: (record: GameRecord) => void;
 }> = ({ games, removeGame }) => {
+  const end = useRef<HTMLDivElement | null>(null);
+
+  // scroll to bottom of log when a new message is added
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth" });
+  }, [games]);
+
   return (
     <div className="overflow-auto max-h-64">
       <ul className="py-4 text-lg font-mono">
@@ -208,6 +215,7 @@ const GameDisplay: React.FC<{
             </button>
           </li>
         ))}
+        <div ref={end} />
       </ul>
     </div>
   );
