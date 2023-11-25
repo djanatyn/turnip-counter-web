@@ -192,7 +192,7 @@ const GameDisplay: React.FC<{
   removeGame: (record: GameRecord) => void;
 }> = ({ games, removeGame }) => {
   return (
-    <div>
+    <div className="overflow-auto h-64">
       <ul className="py-4 text-lg font-mono">
         {games.map((game, idx) => (
           <li
@@ -234,8 +234,6 @@ const SelectReplays: React.FC<{
     previousStep,
   },
 ) => {
-  const directoryRef = useRef<HTMLInputElement | null>(null);
-  const fileRef = useRef<HTMLInputElement | null>(null);
   const logEnd = useRef<HTMLDivElement | null>(null);
 
   const logWindow: JSX.Element | null = logMessages.length === 0
@@ -270,10 +268,9 @@ const SelectReplays: React.FC<{
         <input
           type="file"
           id="replayDataFile"
-          ref={fileRef}
           onChange={async (e) => {
-            if (fileRef.current && fileRef.current.files !== null) {
-              const target = fileRef.current.files[0];
+            if (e.currentTarget.files !== null) {
+              const target = e.currentTarget.files[0];
               const result: Result<GameRecord, string> = await parseReplay(
                 target,
               );
@@ -292,7 +289,30 @@ const SelectReplays: React.FC<{
           name="fileList"
           webkitdirectory=""
           id="replayDataDirectory"
-          ref={directoryRef}
+          onChange={async (e) => {
+            if (e.currentTarget.files !== null) {
+              const length = e.currentTarget.files.length;
+              const directory =
+                e.currentTarget.files[0].webkitRelativePath.split("/")[0];
+              log(`parsing ${length} files from "${directory}":`);
+              for (const file of Array.from(e.currentTarget.files)) {
+                const result: Result<GameRecord, string> = await parseReplay(
+                  file,
+                );
+                if (result.ok) {
+                  log(
+                    `> parsed "${result.value.fileName}" successfully`,
+                  );
+                  addGameRecord(result.value);
+                } else {
+                  log(
+                    `> failed to load "${file.name}": ${result.error}`,
+                  );
+                }
+              }
+            }
+            log(`finished processing ${length} files from ${directory}`);
+          }}
         />
       </div>
       {logWindow}
