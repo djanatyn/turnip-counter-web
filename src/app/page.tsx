@@ -79,17 +79,13 @@ const parseReplay = async (file: File): Promise<Result<GameRecord, string>> => {
   const contents = await file.arrayBuffer();
   try {
     const game = new Game(contents);
-    if (game) {
-      return { ok: true, value: { game, fileName: file.name } };
-    } else {
-      return unknownError;
-    }
+    return game
+      ? { ok: true, value: { game, fileName: file.name } }
+      : unknownError;
   } catch (e: unknown) {
-    if (e instanceof Error) {
-      return { ok: false, error: e.message };
-    } else {
-      return unknownError;
-    }
+    return (e instanceof Error)
+      ? { ok: false, error: e.message }
+      : unknownError;
   }
 };
 
