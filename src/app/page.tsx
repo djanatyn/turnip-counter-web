@@ -25,6 +25,7 @@
  * - a "snipes" where a player died immediately after being hit by a weak turnip (most of those would be from off stage snipes). That might not work z-drop nair would probably count as a snipe then */
 
 import { NextPage } from "next";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 // @ts-ignore experimental urlImport feature from next.js
 import { Game } from "https://cdn.skypack.dev/@slippilab/parser";
@@ -35,6 +36,10 @@ declare module "react" {
     webkitdirectory?: string;
   }
 }
+
+type Result<T, E = Error> =
+  | { ok: true; value: T }
+  | { ok: false; error: E };
 
 type GameRecord = {
   game: Game;
@@ -54,47 +59,48 @@ type State = {
   matchingTags: string[];
   // all parsed replays
   parsedReplays: GameRecord[];
+  logMessages: string[];
+  gameRecords: GameRecord[];
 };
 
 const DEFAULT_STATE: State = {
   step: CounterStep.GetSlippiTag,
   matchingTags: [],
   parsedReplays: [],
+  logMessages: [],
+  gameRecords: [],
 };
 
 // attempt to parse an slp replay from a File entry
-const parseReplay = async (file: File): GameRecord | string => {
+const parseReplay = async (file: File): Promise<Result<GameRecord, string>> => {
+  const unknownError = { ok: false as const, error: "unknown error occurred" };
   const contents = await file.arrayBuffer();
   try {
     const game = new Game(contents);
-    return game ? { game, fileName: file.name } : "unknown error occurred";
-  } catch (e) {
-    return e.message;
+    if (game) {
+      return { ok: true, value: { game, fileName: file.name } };
+    } else {
+      return unknownError;
+    }
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return { ok: false, error: e.message };
+    } else {
+      return unknownError;
+    }
   }
 };
 
 const GetSlippiTag: React.FC<{
+  tags: string[];
+  addTag: (newTag: string) => void;
+  removeTag: (removed: string) => void;
   nextStep: (tags: string[]) => void;
-  startingTags: string[];
-}> = ({ nextStep, startingTags }) => {
+}> = ({ tags, addTag, removeTag, nextStep }) => {
   // TODO move to top-level state
-  // ---
   const [currentText, setCurrentText] = useState<string>("");
-  const [tags, setTags] = useState<string[]>(startingTags);
-  // ---
-
-  const addTag = (newTag: string) => {
-    if (newTag !== "" && !tags.includes(newTag)) {
-      setCurrentText("");
-      setTags([...tags, newTag]);
-    }
-  };
-
-  const removeTag = (removedTag: string) =>
-    setTags(tags.filter((tag: string) => tag != removedTag));
 
   const addTagDisabled: boolean = tags.includes(currentText);
-
   const nextStepDisabled: boolean = tags.length == 0;
 
   // show a placeholder when user has no input
@@ -206,17 +212,22 @@ const GameDisplay: React.FC<{
 const SelectReplays: React.FC<{
   gameRecords: GameRecord[];
   addGameRecord: (record: GameRecord) => void;
+  removeGameRecord: (removed: GameRecord) => void;
   logMessages: string[];
   log: (msg: string) => void;
   nextStep: () => void;
   previousStep: () => void;
-}> = ({ nextStep, previousStep }) => {
-  // TODO move into top-level state
-  // ---
-  const [gameRecords, setGameRecords] = useState<GameRecord[]>([]);
-  const [logMessages, setLogMessages] = useState<string[]>([]);
-  // ---
-
+}> = (
+  {
+    gameRecords,
+    addGameRecord,
+    removeGameRecord,
+    logMessages,
+    log,
+    nextStep,
+    previousStep,
+  },
+) => {
   const directoryRef = useRef<HTMLInputElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const logEnd = useRef<HTMLDivElement | null>(null);
@@ -235,8 +246,6 @@ const SelectReplays: React.FC<{
     logEnd.current?.scrollIntoView({ behavior: "smooth" });
   }, [logMessages]);
 
-  const log = (msg: string) => setLogMessages([...logMessages, msg]);
-
   return (
     <div className="w-[50vw]">
       <p className="text-xl font-bold my-2">
@@ -251,15 +260,17 @@ const SelectReplays: React.FC<{
           id="replayDataFile"
           ref={fileRef}
           onChange={async (e) => {
-            if (fileRef.current && fileRef.current?.files[0]) {
+            if (fileRef.current && fileRef.current.files !== null) {
               const target = fileRef.current.files[0];
-              log(`loading ${target.name}`);
-              const result: GameRecord | string = await parseReplay(target);
-              if (typeof result === "string") {
-                log(`failed to load "${target.name}": ${result}`);
+              log(`loading "${target.name}"`);
+              const result: Result<GameRecord, string> = await parseReplay(
+                target,
+              );
+              if (result.ok) {
+                log(`parsed "${result.value.fileName}" successfully`);
+                addGameRecord(result.value);
               } else {
-                log(`parsed "${result.fileName}" successfully`);
-                setGameRecords([...gameRecords, result]);
+                log(`failed to load "${target.name}": ${result.error}`);
               }
             }
           }}
@@ -276,14 +287,7 @@ const SelectReplays: React.FC<{
       {logWindow}
       <GameDisplay
         games={gameRecords}
-        removeGame={(remove: GameRecord) => {
-          setGameRecords(
-            gameRecords.filter((game: GameRecord) =>
-              game.fileName != remove.fileName
-            ),
-          );
-          log(`removed "${remove.fileName}`);
-        }}
+        removeGame={removeGameRecord}
       />
       <div className="flex flex-row items-center justify-between w-full">
         <button
@@ -317,7 +321,7 @@ const SelectReplays: React.FC<{
 const Header: React.FC<{}> = () => {
   return (
     <div className="w-full min-h-fit h-[10vh] bg-pink-200 overflow-auto flex flex-row gap-4 justify-center items-center">
-      <img src="/turnip-icon.png" />
+      <Image src="/turnip-icon.png" alt="" />
       <p className="text-4xl font-bold">Turnip Counter</p>
       <p className="text-xl">Analyze Melee Peach Item Pull RNG</p>
     </div>
@@ -349,19 +353,50 @@ const Body: React.FC<{
   games: GameRecord[];
   setGames: (games: GameRecord[]) => void;
   state: State;
-  setState: (updated: State) => void;
+  setState: (update: (oldState: State) => State) => void;
 }> = ({ games, setGames, state, setState }) => {
-  let activeStep: JSX.Element = (() => {
+  const addTag = (newTag: string) =>
+    setState((oldState: State) => {
+      const alreadyAdded: boolean = oldState.matchingTags.includes(newTag);
+      return alreadyAdded ? oldState : {
+        ...state,
+        matchingTags: [...oldState.matchingTags, newTag],
+      };
+    });
+
+  const removeTag = (removedTag: string) =>
+    setState((oldState: State) => {
+      return {
+        ...oldState,
+        matchingTags: oldState.matchingTags.filter((tag: string) =>
+          tag != removedTag
+        ),
+      };
+    });
+
+  const log = (msg: string) =>
+    setState((oldState: State) => {
+      return {
+        ...oldState,
+        logMessages: [...oldState.logMessages, msg],
+      };
+    });
+
+  const activeStep: JSX.Element = (() => {
     switch (state.step) {
       case CounterStep.GetSlippiTag: {
         return (
           <GetSlippiTag
-            startingTags={state.matchingTags}
+            tags={state.matchingTags}
+            addTag={addTag}
+            removeTag={removeTag}
             nextStep={(tags: string[]) =>
-              setState({
-                ...state,
-                step: CounterStep.LoadSLPFiles,
-                matchingTags: tags,
+              setState((oldState: State) => {
+                return {
+                  ...oldState,
+                  step: CounterStep.LoadSLPFiles,
+                  matchingTags: tags,
+                };
               })}
           />
         );
@@ -369,11 +404,38 @@ const Body: React.FC<{
       case CounterStep.LoadSLPFiles: {
         return (
           <SelectReplays
-            nextStep={(records: GameRecord[]) => console.log("TODO")}
+            gameRecords={state.gameRecords}
+            addGameRecord={(game: GameRecord) => {
+              setState((oldState: State) => {
+                const alreadyAdded = oldState.gameRecords.some((
+                  addedGame: GameRecord,
+                ) => addedGame.fileName == game.fileName);
+                return alreadyAdded ? oldState : {
+                  ...oldState,
+                  gameRecords: [...oldState.gameRecords, game],
+                };
+              });
+            }}
+            removeGameRecord={(removed: GameRecord) => {
+              setState((oldState: State) => {
+                return {
+                  ...oldState,
+                  gameRecords: oldState.gameRecords.filter((game: GameRecord) =>
+                    game.fileName != removed.fileName
+                  ),
+                };
+              });
+              log(`removed "${removed.fileName}`);
+            }}
+            logMessages={state.logMessages}
+            log={log}
+            nextStep={() => console.log("TODO")}
             previousStep={() =>
-              setState({
-                ...state,
-                step: CounterStep.GetSlippiTag,
+              setState((oldState: State) => {
+                return {
+                  ...oldState,
+                  step: CounterStep.GetSlippiTag,
+                };
               })}
           />
         );
