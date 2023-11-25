@@ -72,7 +72,10 @@ const DEFAULT_STATE: State = {
 
 // attempt to parse an slp replay from a File entry
 const parseReplay = async (file: File): Promise<Result<GameRecord, string>> => {
-  const unknownError = { ok: false as const, error: "unknown error occurred" };
+  const unknownError: Result<GameRecord, string> = {
+    ok: false,
+    error: "unknown error occurred",
+  };
   const contents = await file.arrayBuffer();
   try {
     const game = new Game(contents);
