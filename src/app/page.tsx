@@ -26,8 +26,16 @@
 
 import { NextPage } from "next";
 import { useEffect, useRef, useState } from "react";
-// @ts-ignore experimental urlImport feature from next.js
-import { Game } from "https://cdn.skypack.dev/@slippilab/parser";
+import {
+  CounterStep,
+  DEFAULT_STATE,
+  GameRecord,
+  ItemData,
+  PeachItem,
+  Result,
+  State,
+} from "@/types";
+import { parseReplay } from "@/analyze";
 
 // https://stackoverflow.com/a/76993906
 declare module "react" {
@@ -35,59 +43,6 @@ declare module "react" {
     webkitdirectory?: string;
   }
 }
-
-type Result<T, E = Error> =
-  | { ok: true; value: T }
-  | { ok: false; error: E };
-
-type GameRecord = {
-  game: Game;
-  fileName: string;
-};
-
-enum CounterStep {
-  GetSlippiTag,
-  LoadSLPFiles,
-  AnalyzeReplays,
-  DisplayResults,
-}
-
-type State = {
-  step: CounterStep;
-  // which slippi tags are we using to filter players?
-  matchingTags: string[];
-  // all parsed replays
-  parsedReplays: GameRecord[];
-  logMessages: string[];
-  gameRecords: GameRecord[];
-};
-
-const DEFAULT_STATE: State = {
-  step: CounterStep.GetSlippiTag,
-  matchingTags: [],
-  parsedReplays: [],
-  logMessages: [],
-  gameRecords: [],
-};
-
-// attempt to parse an slp replay from a File entry
-const parseReplay = async (file: File): Promise<Result<GameRecord, string>> => {
-  const unknownError: Result<GameRecord, string> = {
-    ok: false,
-    error: "unknown error occurred",
-  };
-  const contents = await file.arrayBuffer();
-  try {
-    const game = new Game(contents);
-    return game
-      ? { ok: true, value: { game, fileName: file.name } }
-      : unknownError;
-  } catch (e: unknown) {
-    return (e instanceof Error)
-      ? { ok: false, error: e.message }
-      : unknownError;
-  }
-};
 
 const GetSlippiTag: React.FC<{
   tags: string[];
@@ -284,6 +239,7 @@ const SelectReplays: React.FC<{
               );
               if (result.ok) {
                 log(`parsed "${result.value.fileName}" successfully`);
+                console.log(result.value.game);
                 addGameRecord(result.value);
               } else {
                 log(`failed to load "${target.name}": ${result.error}`);
@@ -338,16 +294,6 @@ const SelectReplays: React.FC<{
         <button
           className="px-4 py-2 mt-4 rounded-md border-b border-pink-500 bg-pink-500 text-white font-bold"
           onClick={async () => {
-            {
-              /* if (directoryRef.current && directoryRef.current.files) {
-            const file = await directoryRef.current.files[0].arrayBuffer();
-            setGames([...games, {
-            game: new Game(file),
-            file: directoryRef.current.files[0].name,
-            }]);
-            directoryRef.current.value = "";
-            } */
-            }
           }}
         >
           Analyze Replays
