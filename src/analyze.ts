@@ -1,5 +1,4 @@
-// @ts-ignore experimental urlImport feature from next.js
-import { Game } from "https://cdn.skypack.dev/@slippilab/parser";
+import { Game } from "@slippilab/parser/dist/index.js";
 import { GameRecord, Result } from "@/types";
 
 // attempt to parse an slp replay from a File entry
