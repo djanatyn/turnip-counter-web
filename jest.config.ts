@@ -1,10 +1,19 @@
+import type { JestConfigWithTsJest } from "ts-jest";
 
-import type {Config} from '@jest/types';
-// Sync object
-const config: Config.InitialOptions = {
+const config: JestConfigWithTsJest = {
   verbose: true,
   transform: {
-  '^.+\\.tsx?$': 'ts-jest',
+    "^.+\\.ts?$": [
+      "ts-jest",
+      {
+        useESM: true,
+      },
+    ],
+  },
+  extensionsToTreatAsEsm: [".ts"],
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1",
   },
 };
+
 export default config;

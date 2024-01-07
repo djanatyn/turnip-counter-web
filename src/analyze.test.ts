@@ -5,6 +5,7 @@ import { GameRecord, Result } from "./types";
 import { parseReplay } from "./analyze";
 
 test("read replay file", async () => {
-  const file: File = await fs.readFile(process.cwd() + "/tests/example.slp");
-  const result = parseReplay(file);
+  const file = await fs.readFile(process.cwd() + "/tests/example.slp");
+  const result = parseReplay("example.slp", file);
+  expect(result.ok).toBe(true);
 });

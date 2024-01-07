@@ -191,9 +191,11 @@ export const SelectReplays: React.FC<{
           id="replayDataFile"
           onChange={async (e) => {
             if (e.currentTarget.files !== null) {
-              const target = e.currentTarget.files[0];
-              const result: Result<GameRecord, string> = await parseReplay(
-                target,
+              const target: File = e.currentTarget.files[0];
+              const contents = await target.arrayBuffer();
+              const result: Result<GameRecord, string> = parseReplay(
+                target.name,
+                contents,
               );
               if (result.ok) {
                 log(`parsed "${result.value.fileName}" successfully`);
@@ -217,9 +219,11 @@ export const SelectReplays: React.FC<{
               const directory =
                 e.currentTarget.files[0].webkitRelativePath.split("/")[0];
               log(`parsing ${length} files from "${directory}":`);
-              for (const file of Array.from(e.currentTarget.files)) {
-                const result: Result<GameRecord, string> = await parseReplay(
-                  file,
+              for (const file of Array.from(e.currentTarget.files) as File[]) {
+                const contents = await file.arrayBuffer();
+                const result: Result<GameRecord, string> = parseReplay(
+                  file.name,
+                  contents,
                 );
                 if (result.ok) {
                   log(
