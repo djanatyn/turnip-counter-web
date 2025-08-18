@@ -2,7 +2,6 @@
 
 import { NextPage } from "next";
 import { useState } from "react";
-import { GetSlippiTag, SelectReplays } from "@/components";
 
 // https://stackoverflow.com/a/76993906
 declare module "react" {
