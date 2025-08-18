@@ -1,12 +1,11 @@
-// @ts-ignore experimental urlImport feature from next.js
-import { Game } from "@slippilab/parser/dist/index.js";
+import { ReplayData } from "@slippilab/common";
 
 export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E };
 
 export type GameRecord = {
-  game: Game;
+  game: ReplayData;
   fileName: string;
 };
 

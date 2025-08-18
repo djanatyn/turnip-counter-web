@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@slippilab/common':
+        specifier: ^0.0.6
+        version: 0.0.6
       '@slippilab/parser':
         specifier: ^0.0.6
         version: 0.0.6
