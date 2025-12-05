@@ -10,11 +10,11 @@
     "test": "NODE_OPTIONS='--experimental-vm-modules' pnpm exec jest"
   },
   "dependencies": {
-    "next": "^15",
-    "react": "^18",
-    "react-dom": "^18",
+    "@slippilab/common": "^0.0.6",
     "@slippilab/parser": "^0.0.6",
-    "@slippilab/common": "^0.0.6"
+    "next": "^16.0.7",
+    "react": "^18",
+    "react-dom": "^18"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
