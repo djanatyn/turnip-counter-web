@@ -3,24 +3,48 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --bg: #ffffff;
+  --text: #000000;
+  --border: #cccccc;
+  --input-bg: #fafafa;
+  --progress-bg: #e5e5e5;
+  --progress-fill: #000000;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --border: #404040;
+    --input-bg: #2a2a2a;
+    --progress-bg: #404040;
+    --progress-fill: #e0e0e0;
   }
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgb(var(--background-end-rgb))
-  ) rgb(var(--background-start-rgb));
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+input, button {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+button {
+  cursor: pointer;
+  background: var(--text);
+  color: var(--bg);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.border {
+  border-color: var(--border);
 }
