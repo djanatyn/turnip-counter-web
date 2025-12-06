@@ -13,6 +13,7 @@ import { TabNavigation } from "@/components/TabNavigation";
 import { IntroPage } from "@/components/pages/IntroPage";
 import { LibraryPage } from "@/components/pages/LibraryPage";
 import { AnalysisPage } from "@/components/pages/AnalysisPage";
+import { ExportPage } from "@/components/pages/ExportPage";
 
 // https://stackoverflow.com/a/76993906
 declare module "react" {
@@ -393,6 +394,16 @@ const Body: React.FC<{}> = () => {
                         analyzedFiles={analyzedFiles}
                         selectedFileIds={selectedFileIds}
                         viewMode={viewMode}
+                    />
+                );
+
+            case Page.Export:
+                return (
+                    <ExportPage
+                        analyzedFiles={analyzedFiles}
+                        selectedFileIds={selectedFileIds}
+                        filterText={filterText}
+                        connectCodes={connectCodes}
                     />
                 );
 

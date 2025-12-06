@@ -18,6 +18,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
     ...(showIntro ? [{ page: Page.Intro, label: "Intro" }] : []),
     { page: Page.Library, label: "Library" },
     { page: Page.Analysis, label: "Analysis" },
+    { page: Page.Export, label: "Export" },
   ];
 
   return (
@@ -28,11 +29,11 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
             key={page}
             onClick={() => onPageChange(page)}
             className={`
-              w-full px-4 py-3 rounded text-left font-medium transition-colors
+              w-full px-4 py-3 rounded text-left font-medium transition-all
               ${
                 currentPage === page
-                  ? "bg-opacity-10 bg-current"
-                  : "opacity-60 hover:opacity-100 hover:bg-opacity-5 hover:bg-current"
+                  ? "border-l-4 border-current pl-3"
+                  : "opacity-60 hover:opacity-100 border-l-4 border-transparent"
               }
             `}
           >

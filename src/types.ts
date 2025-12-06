@@ -18,6 +18,8 @@ export enum Page {
   Library,
   /// View analysis results and visualizations
   Analysis,
+  /// Export analysis data as JSON
+  Export,
 }
 
 /// User preferences for persistent settings
