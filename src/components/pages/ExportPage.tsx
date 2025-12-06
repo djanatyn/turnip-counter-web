@@ -252,18 +252,14 @@ export const ExportPage: React.FC<ExportPageProps> = ({
               onClick={() => !option.disabled && setExportType(option.type)}
               disabled={option.disabled}
               className={`
-                p-4 rounded border-2 text-left transition-colors
+                p-4 rounded border-2 text-left transition-all
                 ${
                   exportType === option.type
                     ? "border-current"
                     : "border-transparent opacity-70"
                 }
-                ${option.disabled ? "opacity-40 cursor-not-allowed" : "hover:opacity-100"}
+                ${option.disabled ? "opacity-40 cursor-not-allowed" : "hover:opacity-100 hover:border-opacity-30 hover:border-current"}
               `}
-              style={{
-                backgroundColor:
-                  exportType === option.type ? "var(--input-bg)" : "transparent",
-              }}
             >
               <div className="font-medium mb-1">{option.label}</div>
               <div className="text-sm opacity-60">

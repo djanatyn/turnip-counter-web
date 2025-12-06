@@ -23,6 +23,7 @@ interface AnalysisPageProps {
   analyzedFiles: FileMetadata[];
   selectedFileIds: Set<string>;
   viewMode: "all" | "selected";
+  onRegenerateAnalysis: () => void;
 }
 
 export const AnalysisPage: React.FC<AnalysisPageProps> = ({
@@ -30,7 +31,22 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   analyzedFiles,
   selectedFileIds,
   viewMode,
+  onRegenerateAnalysis,
 }) => {
+  // Check if we have aggregate results
+  const aggregateResults = results.filter(
+    (r) =>
+      r.fileId === "aggregate" ||
+      r.fileId === "time-series" ||
+      r.fileId === "comparative"
+  );
+
+  // Determine if analysis is stale or missing
+  const hasSelection = selectedFileIds.size > 0;
+  const hasAggregateResults = aggregateResults.length > 0;
+  const needsRegeneration = hasSelection && !hasAggregateResults;
+  const hasStaleResults = hasSelection && hasAggregateResults;
+
   if (results.length === 0) {
     return (
       <main className="max-w-4xl mx-auto px-8 py-12">
@@ -55,14 +71,74 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
           : ""}
       </h2>
 
-      {/* Empty state when no selection */}
+      {/* Warning: No selection */}
       {selectedFileIds.size === 0 && (
-        <div className="p-8 border rounded text-center opacity-60 mb-12">
-          <p className="mb-2">No games selected</p>
-          <p className="text-sm">
-            Select games from the Filtering tab and click &quot;Regenerate Analysis&quot;
-            to see aggregate statistics for those games.
-          </p>
+        <div className="p-6 border-2 border-yellow-500 border-opacity-50 rounded mb-12">
+          <div className="flex items-start gap-4">
+            <div className="text-2xl">⚠️</div>
+            <div className="flex-1">
+              <p className="font-medium mb-2">No games selected</p>
+              <p className="text-sm opacity-80 mb-4">
+                Select games from the Library tab to generate aggregate statistics.
+                Without a selection, only per-game results are shown below.
+              </p>
+              <p className="text-sm opacity-60">
+                💡 Tip: Use checkboxes in the Library to select games, then click
+                &quot;Regenerate Analysis&quot; to see aggregate stats here.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Warning: Selection changed - needs regeneration */}
+      {needsRegeneration && (
+        <div className="p-6 border-2 border-orange-500 border-opacity-50 rounded mb-12">
+          <div className="flex items-start gap-4">
+            <div className="text-2xl">🔄</div>
+            <div className="flex-1">
+              <p className="font-medium mb-2">
+                Analysis needed for {selectedFileIds.size} selected game
+                {selectedFileIds.size !== 1 ? "s" : ""}
+              </p>
+              <p className="text-sm opacity-80 mb-4">
+                You have games selected, but no aggregate analysis has been generated yet.
+                Click the button below to analyze your selection.
+              </p>
+              <button
+                onClick={onRegenerateAnalysis}
+                className="px-6 py-2 rounded border-2 border-current hover:bg-current hover:bg-opacity-10 transition-colors"
+              >
+                Generate Analysis for {selectedFileIds.size} Game
+                {selectedFileIds.size !== 1 ? "s" : ""}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Warning: Stale results - selection may have changed */}
+      {hasStaleResults && (
+        <div className="p-6 border-2 border-blue-500 border-opacity-50 rounded mb-12">
+          <div className="flex items-start gap-4">
+            <div className="text-2xl">📊</div>
+            <div className="flex-1">
+              <p className="font-medium mb-2">
+                Viewing analysis for {selectedFileIds.size} selected game
+                {selectedFileIds.size !== 1 ? "s" : ""}
+              </p>
+              <p className="text-sm opacity-80 mb-4">
+                The aggregate statistics below were generated from your current selection.
+                If you&apos;ve changed your selection, click below to regenerate.
+              </p>
+              <button
+                onClick={onRegenerateAnalysis}
+                className="px-6 py-2 rounded border-2 border-current hover:bg-current hover:bg-opacity-10 transition-colors"
+              >
+                Regenerate Analysis
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

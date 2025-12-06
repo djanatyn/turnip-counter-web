@@ -394,6 +394,7 @@ const Body: React.FC<{}> = () => {
                         analyzedFiles={analyzedFiles}
                         selectedFileIds={selectedFileIds}
                         viewMode={viewMode}
+                        onRegenerateAnalysis={loadResults}
                     />
                 );
 
