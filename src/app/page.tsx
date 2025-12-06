@@ -2,13 +2,18 @@
 
 import { NextPage } from "next";
 import { useState, useEffect } from "react";
+import { Page } from "@/types";
 import { getAnalyzerRegistry } from "@/analysis/registry";
 import { getStorageManager } from "@/storage/db";
 import { AnalysisPipeline } from "@/analysis/pipeline";
-import { getVisualizerRegistry } from "@/visualizers/registry";
 import { registerAllAnalyzers } from "@/analyzers";
 import { registerAllVisualizers } from "@/visualizers";
 import type { ProcessingProgress, AnalysisResult } from "@/analysis/types";
+import { TabNavigation } from "@/components/TabNavigation";
+import { IntroPage } from "@/components/pages/IntroPage";
+import { LibraryPage } from "@/components/pages/LibraryPage";
+import { FilteringPage } from "@/components/pages/FilteringPage";
+import { AnalysisPage } from "@/components/pages/AnalysisPage";
 
 // https://stackoverflow.com/a/76993906
 declare module "react" {
@@ -58,6 +63,11 @@ interface FileMetadata {
 }
 
 const Body: React.FC<{}> = () => {
+    // Navigation state
+    const [currentPage, setCurrentPage] = useState<Page>(Page.Library);
+    const [showIntro, setShowIntro] = useState(true);
+
+    // Shared state across all pages
     const [files, setFiles] = useState<File[]>([]);
     const [progress, setProgress] = useState<ProcessingProgress | null>(null);
     const [results, setResults] = useState<AnalysisResult[]>([]);
@@ -73,6 +83,7 @@ const Body: React.FC<{}> = () => {
         registerAllAnalyzers();
         registerAllVisualizers();
         loadAnalyzedFiles();
+        loadUserPreferences();
     }, []);
 
     // Load analyzed files from storage
@@ -319,308 +330,102 @@ const Body: React.FC<{}> = () => {
         }
     };
 
+    // Load user preferences on mount
+    const loadUserPreferences = async () => {
+        const storage = getStorageManager();
+        const hasSeenIntro = await storage.getUserPreference<boolean>("hasSeenIntro");
+
+        if (hasSeenIntro === true) {
+            setShowIntro(false);
+            setCurrentPage(Page.Library);
+        } else {
+            setShowIntro(true);
+            setCurrentPage(Page.Intro);
+        }
+    };
+
+    // Handle intro dismissal
+    const handleDismissIntro = async () => {
+        const storage = getStorageManager();
+        await storage.setUserPreference("hasSeenIntro", true);
+        setShowIntro(false);
+        setCurrentPage(Page.Library);
+    };
+
+    // Handle page navigation
+    const handlePageChange = (page: Page) => {
+        setCurrentPage(page);
+    };
+
+    // Render current page based on navigation state
+    const renderCurrentPage = () => {
+        switch (currentPage) {
+            case Page.Intro:
+                return <IntroPage onDismiss={handleDismissIntro} />;
+
+            case Page.Library:
+                return (
+                    <LibraryPage
+                        files={files}
+                        progress={progress}
+                        isProcessing={isProcessing}
+                        analyzedFiles={analyzedFiles}
+                        selectedFileIds={selectedFileIds}
+                        onFileSelection={handleFileSelection}
+                        onProcess={handleProcess}
+                        onToggleSelection={toggleFileSelection}
+                    />
+                );
+
+            case Page.Filtering:
+                return (
+                    <FilteringPage
+                        connectCodes={connectCodes}
+                        filterText={filterText}
+                        analyzedFiles={analyzedFiles}
+                        selectedFileIds={selectedFileIds}
+                        viewMode={viewMode}
+                        onConnectCodesChange={setConnectCodes}
+                        onFilterTextChange={setFilterText}
+                        onSelectAll={selectAll}
+                        onDeselectAll={deselectAll}
+                        onToggleViewMode={() => setViewMode(viewMode === "all" ? "selected" : "all")}
+                        onDeleteSelected={deleteSelectedFiles}
+                        onRegenerateAnalysis={loadResults}
+                        onToggleSelection={toggleFileSelection}
+                    />
+                );
+
+            case Page.Analysis:
+                return (
+                    <AnalysisPage
+                        results={results}
+                        analyzedFiles={analyzedFiles}
+                        selectedFileIds={selectedFileIds}
+                        viewMode={viewMode}
+                    />
+                );
+
+            default:
+                return <div>Unknown page</div>;
+        }
+    };
+
     return (
-        <main className="max-w-4xl mx-auto px-8 py-12">
-            <p className="text-sm opacity-60 mb-12">
-                All replays are processed locally in your browser - replays never leave your computer.
-            </p>
-
-            {/* Connect Code Input */}
-            <div className="mb-8">
-                <label htmlFor="connectCodes" className="block font-medium mb-3">
-                    Your Slippi Connect Code (optional)
-                </label>
-                <input
-                    type="text"
-                    id="connectCodes"
-                    placeholder="e.g., ABCD#123"
-                    value={connectCodes}
-                    onChange={(e) => setConnectCodes(e.target.value)}
-                    className="w-full px-4 py-3 rounded"
-                />
-                <p className="mt-2 text-sm opacity-60">
-                    Leave empty to analyze all players, or enter your code to filter results.
-                </p>
-            </div>
-
-            {/* File Selection */}
-            <div className="mb-8">
-                <label className="block font-medium mb-3">
-                    Select Replay Files (.slp)
-                </label>
-                <input
-                    type="file"
-                    multiple
-                    accept=".slp"
-                    onChange={handleFileSelection}
-                    className="block w-full rounded p-3"
-                />
-                <p className="mt-2 text-sm opacity-60">
-                    {files.length} file(s) selected
-                </p>
-            </div>
-
-            {/* Process Button */}
-            <button
-                onClick={handleProcess}
-                disabled={isProcessing || files.length === 0}
-                className="px-8 py-3 rounded text-base"
-            >
-                {isProcessing ? "Processing..." : "Analyze Replays"}
-            </button>
-
-            {/* Progress */}
-            {progress && (
-                <div className="mt-8 p-4 border rounded">
-                    <div className="text-sm mb-3">
-                        Progress: {progress.processedFiles} / {progress.totalFiles}
-                    </div>
-                    <div className="w-full h-2 rounded" style={{backgroundColor: 'var(--progress-bg)'}}>
-                        <div
-                            className="h-2 rounded"
-                            style={{
-                                backgroundColor: 'var(--progress-fill)',
-                                width: `${
-                                    (progress.processedFiles / progress.totalFiles) * 100
-                                }%`,
-                            }}
-                        />
-                    </div>
-                    {progress.currentFile && (
-                        <div className="mt-2 text-xs opacity-60">
-                            {progress.currentFile} - {progress.currentAnalyzer}
-                        </div>
-                    )}
-                    {progress.errors.length > 0 && (
-                        <div className="mt-4">
-                            <div className="text-sm font-medium mb-2">
-                                {progress.errors.length} error(s):
-                            </div>
-                            <div className="max-h-40 overflow-y-auto text-xs">
-                                {progress.errors.map((err, idx) => (
-                                    <div key={idx} className="mb-1">
-                                        {err.fileName}: {err.error}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Game Library */}
-            {analyzedFiles.length > 0 && (
-                <div className="mt-16 border-t pt-12">
-                    <h2 className="text-2xl font-bold mb-6">Game Library</h2>
-                    <p className="mb-6 opacity-60">
-                        {getFilteredFiles().length} of {analyzedFiles.length} games
-                        {selectedFileIds.size > 0 && ` • ${selectedFileIds.size} selected`}
-                    </p>
-
-                    {/* Filter and Actions */}
-                    <div className="mb-6 space-y-4">
-                        <input
-                            type="text"
-                            placeholder="Filter by filename or connect code..."
-                            value={filterText}
-                            onChange={(e) => setFilterText(e.target.value)}
-                            className="w-full px-4 py-3 rounded"
-                        />
-
-                        <div className="flex flex-wrap gap-3">
-                            <button
-                                onClick={selectAll}
-                                className="px-4 py-2 rounded"
-                            >
-                                Select All
-                            </button>
-                            <button
-                                onClick={deselectAll}
-                                className="px-4 py-2 rounded"
-                            >
-                                Deselect All
-                            </button>
-                            <button
-                                onClick={() => setViewMode(viewMode === "all" ? "selected" : "all")}
-                                disabled={selectedFileIds.size === 0}
-                                className="px-4 py-2 rounded"
-                            >
-                                {viewMode === "all" ? "View Selected Only" : "View All"}
-                            </button>
-                            <button
-                                onClick={deleteSelectedFiles}
-                                disabled={selectedFileIds.size === 0}
-                                className="px-4 py-2 rounded"
-                            >
-                                Delete Selected ({selectedFileIds.size})
-                            </button>
-                            <button
-                                onClick={loadResults}
-                                disabled={analyzedFiles.length === 0}
-                                className="px-4 py-2 rounded"
-                            >
-                                Regenerate Analysis ({selectedFileIds.size > 0 ? selectedFileIds.size : 'all'} games)
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* File List - Scrollable */}
-                    <div className="border rounded max-h-96 overflow-y-auto">
-                        {getFilteredFiles().map((file) => (
-                            <div
-                                key={file.id}
-                                className="flex items-center gap-4 p-4 border-b last:border-b-0"
-                                style={{backgroundColor: selectedFileIds.has(file.id) ? 'var(--input-bg)' : 'transparent'}}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={selectedFileIds.has(file.id)}
-                                    onChange={() => toggleFileSelection(file.id)}
-                                    className="w-5 h-5"
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <div className="font-medium mb-1 truncate">{file.fileName}</div>
-                                    <div className="text-sm opacity-60">
-                                        {file.gameMetadata.players.map(p => p.connectCode || "Unknown").join(" vs ")}
-                                        {" • "}
-                                        {new Date(file.gameMetadata.timestamp).toLocaleDateString()}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Results */}
-            {results.length > 0 && (
-                <div className="mt-16">
-                    <h2 className="text-2xl font-bold mb-8">
-                        Analysis Results
-                        {selectedFileIds.size > 0
-                            ? ` (${selectedFileIds.size} games)`
-                            : analyzedFiles.length > 0 ? ` (all ${analyzedFiles.length} games)` : ''}
-                    </h2>
-
-                    {/* Empty state when no selection */}
-                    {selectedFileIds.size === 0 && (
-                        <div className="p-8 border rounded text-center opacity-60">
-                            <p className="mb-2">No games selected</p>
-                            <p className="text-sm">
-                                Select games from the Game Library above and click &quot;Regenerate Analysis&quot;
-                                to see aggregate statistics for those games.
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Summary Section - only show if games selected */}
-                    {selectedFileIds.size > 0 && (
-                        <div className="mb-12">
-                            <h3 className="text-lg font-medium opacity-60 mb-4">Summary</h3>
-                        <div className="space-y-6">
-                            {results
-                                .filter((r) =>
-                                    r.fileId === "aggregate" ||
-                                    r.fileId === "time-series" ||
-                                    r.fileId === "comparative"
-                                )
-                                .map((result) => {
-                                    const visualizerRegistry = getVisualizerRegistry();
-                                    const visualizer = visualizerRegistry.getVisualizerForShape(
-                                        result.output.shape
-                                    );
-                                    return (
-                                        <div key={result.id}>
-                                            {visualizer ? (
-                                                visualizer.render(result.output)
-                                            ) : (
-                                                <pre className="text-xs">{JSON.stringify(result.output, null, 2)}</pre>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                        </div>
-                        </div>
-                    )}
-
-                    {/* Per-Game Section */}
-                    <details className="border-t pt-8" open>
-                        <summary className="cursor-pointer text-lg font-medium opacity-60 mb-6">
-                            Per-Game Results
-                        </summary>
-                        <div className="max-h-96 overflow-y-auto space-y-6 pr-2">
-                            {(() => {
-                                // Group results by fileId
-                                const perGameResults = results.filter((r) =>
-                                    r.fileId !== "aggregate" &&
-                                    r.fileId !== "time-series" &&
-                                    r.fileId !== "comparative"
-                                );
-
-                                // Group by fileId
-                                const groupedByFile = new Map<string, AnalysisResult[]>();
-                                for (const result of perGameResults) {
-                                    const fileResults = groupedByFile.get(result.fileId) || [];
-                                    fileResults.push(result);
-                                    groupedByFile.set(result.fileId, fileResults);
-                                }
-
-                                // Filter based on viewMode
-                                const fileIdsToShow = viewMode === "selected" && selectedFileIds.size > 0
-                                    ? Array.from(selectedFileIds)
-                                    : Array.from(groupedByFile.keys());
-
-                                return fileIdsToShow.map((fileId) => {
-                                    const fileResults = groupedByFile.get(fileId) || [];
-                                    const fileMetadata = analyzedFiles.find(f => f.id === fileId);
-
-                                    return (
-                                        <div key={fileId} className="border rounded p-6">
-                                            {/* File Header */}
-                                            <div className="mb-4 pb-3 border-b">
-                                                <div className="font-medium mb-2">{fileMetadata?.fileName || fileId}</div>
-                                                {fileMetadata && (
-                                                    <div className="text-sm opacity-60">
-                                                        {fileMetadata.gameMetadata.players.map(p => p.connectCode || "Unknown").join(" vs ")}
-                                                        {" • "}
-                                                        {new Date(fileMetadata.gameMetadata.timestamp).toLocaleDateString()}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* File Results */}
-                                            <div className="space-y-4">
-                                                {fileResults.map((result) => {
-                                                    const visualizerRegistry = getVisualizerRegistry();
-                                                    const visualizer = visualizerRegistry.getVisualizerForShape(
-                                                        result.output.shape
-                                                    );
-                                                    return (
-                                                        <div key={result.id}>
-                                                            {visualizer ? (
-                                                                visualizer.render(result.output)
-                                                            ) : (
-                                                                <pre className="text-xs">{JSON.stringify(result.output, null, 2)}</pre>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    );
-                                });
-                            })()}
-                        </div>
-                    </details>
-                </div>
-            )}
-        </main>
+        <>
+            <TabNavigation
+                currentPage={currentPage}
+                showIntro={showIntro}
+                onPageChange={handlePageChange}
+            />
+            {renderCurrentPage()}
+        </>
     );
 };
 
 const TurnipCounter: NextPage = () => {
     return (
-        <main className="min-h-screen flex flex-col items-center">
+        <main className="min-h-screen flex flex-col">
             <Header />
             <Body />
             <Footer />

@@ -221,6 +221,84 @@ export class StorageManager {
   }
 
   /**
+   * Get a user preference by key
+   */
+  async getUserPreference<T>(key: string): Promise<T | null> {
+    await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(
+        [StoreName.UserPreferences],
+        "readonly"
+      );
+      const store = transaction.objectStore(StoreName.UserPreferences);
+      const request = store.get(key);
+
+      request.onsuccess = () => {
+        if (!request.result) {
+          resolve(null);
+        } else {
+          resolve(request.result.value as T);
+        }
+      };
+
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  /**
+   * Set a user preference
+   */
+  async setUserPreference<T>(key: string, value: T): Promise<void> {
+    await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(
+        [StoreName.UserPreferences],
+        "readwrite"
+      );
+      const store = transaction.objectStore(StoreName.UserPreferences);
+
+      const record = {
+        key,
+        value,
+        updatedAt: new Date().toISOString(),
+      };
+
+      const request = store.put(record);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  /**
+   * Get all user preferences
+   */
+  async getAllUserPreferences(): Promise<Record<string, any>> {
+    await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(
+        [StoreName.UserPreferences],
+        "readonly"
+      );
+      const store = transaction.objectStore(StoreName.UserPreferences);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const prefs: Record<string, any> = {};
+        for (const record of request.result) {
+          prefs[record.key] = record.value;
+        }
+        resolve(prefs);
+      };
+
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  /**
    * Clear all data (for testing or reset)
    */
   async clearAll(): Promise<void> {
@@ -230,6 +308,7 @@ export class StorageManager {
       StoreName.Files,
       StoreName.AnalysisResults,
       StoreName.AggregateCache,
+      StoreName.UserPreferences,
     ];
 
     return new Promise((resolve, reject) => {

@@ -2,7 +2,7 @@
  * IndexedDB database name and version
  */
 export const DB_NAME = "SlippiAnalysisDB";
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 /**
  * Object store names
@@ -11,6 +11,7 @@ export enum StoreName {
   Files = "files",
   AnalysisResults = "analysis_results",
   AggregateCache = "aggregate_cache",
+  UserPreferences = "user_preferences",
 }
 
 /**
@@ -53,6 +54,18 @@ export interface DatabaseSchema {
     indexes: {
       byAnalyzerId: string;
       byComputedAt: string;
+    };
+  };
+
+  user_preferences: {
+    key: string; // preference key
+    value: {
+      key: string;
+      value: any;
+      updatedAt: string;
+    };
+    indexes: {
+      byUpdatedAt: string;
     };
   };
 }
@@ -115,6 +128,14 @@ export function createDatabase(): IDBOpenDBRequest {
       });
       cacheStore.createIndex("byAnalyzerId", "analyzerId", { unique: false });
       cacheStore.createIndex("byComputedAt", "computedAt", { unique: false });
+    }
+
+    // Create USER_PREFERENCES store
+    if (!db.objectStoreNames.contains(StoreName.UserPreferences)) {
+      const prefsStore = db.createObjectStore(StoreName.UserPreferences, {
+        keyPath: "key",
+      });
+      prefsStore.createIndex("byUpdatedAt", "updatedAt", { unique: false });
     }
   };
 
