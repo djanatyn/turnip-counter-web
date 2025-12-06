@@ -33,8 +33,8 @@ export class TimeSeriesVisualizer implements Visualizer {
       <div className="p-6 border rounded">
         <h3 className="font-medium mb-4">{data.label}</h3>
 
-        {/* Simple ASCII-style chart */}
-        <div className="space-y-2 text-sm font-mono">
+        {/* Simple ASCII-style chart with scrolling */}
+        <div className="space-y-2 text-sm font-mono max-h-96 overflow-y-auto pr-2">
           {data.data.map((point, idx) => {
             const percentage = ((point.value - minValue) / range) * 100;
             const barWidth = Math.max(percentage, 2);
@@ -62,9 +62,11 @@ export class TimeSeriesVisualizer implements Visualizer {
           })}
         </div>
 
-        <div className="mt-4 text-sm opacity-60">
-          Range: {minValue.toFixed(1)}{data.unit} - {maxValue.toFixed(1)}
-          {data.unit}
+        <div className="mt-4 pt-3 border-t text-sm opacity-60">
+          <div className="flex justify-between">
+            <span>Range: {minValue.toFixed(1)}{data.unit} - {maxValue.toFixed(1)}{data.unit}</span>
+            <span>{data.data.length} games</span>
+          </div>
         </div>
       </div>
     );
