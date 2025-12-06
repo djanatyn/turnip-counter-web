@@ -9,10 +9,14 @@ import { AnalysisPhase, DataShape } from "@/analysis/types";
 import type { ReplayData } from "@slippilab/common";
 
 /**
- * Analyzes Peach turnip pulls in a game
- * Tracks which turnip faces were pulled and their distribution
+ * Analyzes Peach down-b pulls in a game
+ * Tracks which turnip faces and special items were pulled
  *
- * Turnip faces (peachTurnipFace values):
+ * Peach's down-b pull mechanics:
+ * - 127/128 chance: Turnip (typeId 99) with peachTurnipFace 0-7
+ * - 1/128 chance: Special item (Bob-omb, Mr. Saturn, or Beam Sword)
+ *
+ * Turnip faces (peachTurnipFace values for typeId 99):
  * 0 = Normal (most common)
  * 1 = Stitch Face (rare, stronger)
  * 2 = Dot Eyes
@@ -20,39 +24,40 @@ import type { ReplayData } from "@slippilab/common";
  * 4 = Circle Eyes
  * 5 = Carrot Eyes
  * 6 = Wink (rare)
- * 7 = Dot Eyes Closed (very rare)
- * 8 = Mr. Saturn (very rare item)
- * 9 = Bob-omb (very rare item)
+ * 7 = Dot Eyes (merged with 2)
+ *
+ * Special items (separate typeIds):
+ * typeId 6 = Bob-omb
+ * typeId 7 = Mr. Saturn
+ * typeId 12 = Beam Sword
  */
 export class TurnipPullsAnalyzer implements Analyzer {
   readonly metadata: AnalyzerMetadata = {
     id: "turnip-pulls",
     name: "Turnip Pull Distribution",
     description:
-      "Analyzes which turnip faces were pulled (Peach-specific)",
+      "Analyzes which turnip faces and special items were pulled from Peach's down-b",
     phase: AnalysisPhase.PerGame,
     outputShape: DataShape.Distribution,
-    version: 1,
+    version: 2,
     author: "DJAN",
     tags: ["peach", "items", "rng"],
   };
 
-  private readonly TURNIP_NAMES: Record<number, string> = {
+  private readonly TURNIP_TYPE_ID = 99;
+  private readonly BOB_OMB_TYPE_ID = 6;
+  private readonly MR_SATURN_TYPE_ID = 7;
+  private readonly BEAM_SWORD_TYPE_ID = 12;
+
+  private readonly TURNIP_FACE_NAMES: Record<number, string> = {
     0: "Normal",
     1: "Stitch Face",
-    2: "Dot Eyes",
+    2: "Dot Eyes", // Combines face 2 and 7
     3: "Line Eyes",
     4: "Circle Eyes",
     5: "Carrot Eyes",
     6: "Wink",
-    7: "Dot Eyes", // Combine with regular Dot Eyes
-    8: "Mr. Saturn",
-    9: "Bob-omb",
-    // Mystery values - may need adjustment based on actual data
-    99: "Unknown (99)",
-    219: "Unknown (219)",
-    230: "Unknown (230)",
-    255: "Unknown (255)",
+    7: "Dot Eyes", // Merged with 2
   };
 
   analyze(context: AnalysisContext): DistributionOutput {
@@ -61,38 +66,59 @@ export class TurnipPullsAnalyzer implements Analyzer {
     // Determine which player indices to analyze
     const targetIndices = this.getTargetPlayerIndices(replay, userContext);
 
-    // Track unique turnips by spawnId to avoid counting the same turnip multiple times
-    const seenTurnips = new Set<number>();
-    const turnipCounts = new Map<number, number>();
+    // Track unique items by spawnId to avoid counting the same item multiple times
+    const seenItems = new Set<number>();
+    const pullCounts = new Map<string, number>();
 
-    // Iterate through frames looking for turnip spawns
+    // Iterate through frames looking for Peach down-b pulls
     for (const frame of replay.frames) {
       for (const item of frame.items) {
-        // Check if this is a turnip (has peachTurnipFace and not the default/null value)
-        // and if it belongs to a target player
-        // Note: peachTurnipFace === 75 appears to be a default/null value for non-turnip items
+        // Skip if already seen or not owned by target player
         if (
-          item.peachTurnipFace !== undefined &&
-          item.peachTurnipFace !== 75 &&
-          targetIndices.has(item.owner) &&
-          !seenTurnips.has(item.spawnId)
+          seenItems.has(item.spawnId) ||
+          !targetIndices.has(item.owner)
         ) {
-          seenTurnips.add(item.spawnId);
+          continue;
+        }
+
+        let pullType: string | null = null;
+
+        // Check for turnips (typeId 99)
+        if (item.typeId === this.TURNIP_TYPE_ID) {
           const face = item.peachTurnipFace;
-          turnipCounts.set(face, (turnipCounts.get(face) || 0) + 1);
+          // Valid turnip faces are 0-7
+          if (face >= 0 && face <= 7) {
+            seenItems.add(item.spawnId);
+            pullType = this.TURNIP_FACE_NAMES[face];
+          }
+        }
+        // Check for special items from down-b
+        else if (item.typeId === this.BOB_OMB_TYPE_ID) {
+          seenItems.add(item.spawnId);
+          pullType = "Bob-omb";
+        } else if (item.typeId === this.MR_SATURN_TYPE_ID) {
+          seenItems.add(item.spawnId);
+          pullType = "Mr. Saturn";
+        } else if (item.typeId === this.BEAM_SWORD_TYPE_ID) {
+          seenItems.add(item.spawnId);
+          pullType = "Beam Sword";
+        }
+
+        if (pullType) {
+          pullCounts.set(pullType, (pullCounts.get(pullType) || 0) + 1);
         }
       }
     }
 
     // Convert to distribution format
-    const totalPulls = Array.from(turnipCounts.values()).reduce(
+    const totalPulls = Array.from(pullCounts.values()).reduce(
       (sum, count) => sum + count,
       0
     );
 
-    const data = Array.from(turnipCounts.entries())
-      .map(([face, count]) => ({
-        label: this.TURNIP_NAMES[face] || `Type ${face}`,
+    const data = Array.from(pullCounts.entries())
+      .map(([label, count]) => ({
+        label,
         count,
         percentage:
           totalPulls > 0 ? Math.round((count / totalPulls) * 1000) / 10 : 0,
@@ -101,7 +127,7 @@ export class TurnipPullsAnalyzer implements Analyzer {
 
     return {
       shape: DataShape.Distribution,
-      label: `Turnip Pulls (${totalPulls} total)`,
+      label: `Peach Down-B Pulls (${totalPulls} total)`,
       data,
     };
   }

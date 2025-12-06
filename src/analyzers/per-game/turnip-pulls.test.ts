@@ -29,53 +29,6 @@ describe("TurnipPullsAnalyzer", () => {
 
     const replay = parseResult.value.game;
 
-    // Debug: Check if frames have items
-    console.log("Total frames:", replay.frames.length);
-
-    // Check first few frames for structure
-    const framesWithItems = replay.frames.filter((f: any) =>
-      f.items && Array.isArray(f.items) && f.items.length > 0
-    );
-    console.log("Frames with items:", framesWithItems.length);
-
-    // Collect unique typeIds and items with peachTurnipFace
-    const typeIds = new Set<number>();
-    const itemsWithTurnipFace: any[] = [];
-
-    for (const frame of replay.frames) {
-      if (frame.items) {
-        for (const item of frame.items) {
-          typeIds.add(item.typeId);
-          if (item.peachTurnipFace !== undefined && item.peachTurnipFace !== 75) {
-            itemsWithTurnipFace.push(item);
-          }
-        }
-      }
-    }
-
-    console.log("Unique typeIds:", Array.from(typeIds).sort((a, b) => a - b));
-    console.log("Items with turnipFace (non-75):", itemsWithTurnipFace.length);
-
-    // Collect unique peachTurnipFace values
-    const turnipFaceValues = new Set<number>();
-    for (const frame of replay.frames) {
-      if (frame.items) {
-        for (const item of frame.items) {
-          if (item.peachTurnipFace !== undefined && item.peachTurnipFace !== 75) {
-            turnipFaceValues.add(item.peachTurnipFace);
-          }
-        }
-      }
-    }
-    console.log("Unique peachTurnipFace values:", Array.from(turnipFaceValues).sort((a, b) => a - b));
-
-    // Check player characters (Peach is character ID 13)
-    console.log("Players:", replay.settings.playerSettings.map((p: any) => ({
-      index: p.playerIndex,
-      characterId: p.characterId,
-      connectCode: p.connectCode,
-    })));
-
     // Create context
     const context: AnalysisContext = {
       replay,
@@ -103,12 +56,15 @@ describe("TurnipPullsAnalyzer", () => {
 
     // Assertions
     expect(result.shape).toBe(DataShape.Distribution);
-    expect(result.label).toContain("Turnip Pulls");
+    expect(result.label).toContain("Peach Down-B Pulls");
     expect(Array.isArray(result.data)).toBe(true);
+    expect(result.data.length).toBeGreaterThan(0);
 
-    console.log(`Turnip Pulls Result:`, JSON.stringify(result, null, 2));
-
-    // If there are Peach players, we should see turnip data
-    // (or at least understand why we don't)
+    // Verify turnip types are properly labeled (no mystery values)
+    for (const item of result.data) {
+      expect(item.label).not.toContain("Unknown");
+      expect(item.count).toBeGreaterThan(0);
+      expect(item.percentage).toBeGreaterThan(0);
+    }
   });
 });
