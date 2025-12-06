@@ -14,7 +14,7 @@ export const IntroPage: React.FC<IntroPageProps> = ({ onDismiss }) => {
           <h2 className="text-2xl font-bold mb-4">Welcome to Turnip Counter</h2>
           <p className="text-lg opacity-80 mb-6">
             Analyze your Super Smash Bros. Melee Slippi replays to gain insights
-            into your gameplay, track your progress, and improve your skills.
+            into your gameplay.
           </p>
           <p className="opacity-60">
             All replays are processed locally in your browser - replays never
@@ -25,7 +25,6 @@ export const IntroPage: React.FC<IntroPageProps> = ({ onDismiss }) => {
         <section>
           <h3 className="text-xl font-semibold mb-3">Features</h3>
           <ul className="space-y-2 opacity-80">
-            <li>• Upload and analyze .slp replay files</li>
             <li>• Filter games by connect code or player</li>
             <li>• Track L-cancel success rates over time</li>
             <li>• Analyze Peach turnip pull statistics</li>
@@ -37,9 +36,8 @@ export const IntroPage: React.FC<IntroPageProps> = ({ onDismiss }) => {
         <section>
           <h3 className="text-xl font-semibold mb-3">Getting Started</h3>
           <ol className="space-y-2 opacity-80">
-            <li>1. Go to the <strong>Library</strong> tab to upload .slp files</li>
-            <li>2. Use the <strong>Filtering</strong> tab to select specific games</li>
-            <li>3. View results in the <strong>Analysis</strong> tab</li>
+            <li>1. Go to the <strong>Library</strong> tab to parse and analyze local .slp files and select specific games</li>
+            <li>2. View results in the <strong>Analysis</strong> tab</li>
           </ol>
         </section>
 
