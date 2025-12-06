@@ -12,7 +12,6 @@ import type { ProcessingProgress, AnalysisResult } from "@/analysis/types";
 import { TabNavigation } from "@/components/TabNavigation";
 import { IntroPage } from "@/components/pages/IntroPage";
 import { LibraryPage } from "@/components/pages/LibraryPage";
-import { FilteringPage } from "@/components/pages/FilteringPage";
 import { AnalysisPage } from "@/components/pages/AnalysisPage";
 
 // https://stackoverflow.com/a/76993906
@@ -371,20 +370,12 @@ const Body: React.FC<{}> = () => {
                         isProcessing={isProcessing}
                         analyzedFiles={analyzedFiles}
                         selectedFileIds={selectedFileIds}
+                        connectCodes={connectCodes}
+                        filterText={filterText}
+                        viewMode={viewMode}
                         onFileSelection={handleFileSelection}
                         onProcess={handleProcess}
                         onToggleSelection={toggleFileSelection}
-                    />
-                );
-
-            case Page.Filtering:
-                return (
-                    <FilteringPage
-                        connectCodes={connectCodes}
-                        filterText={filterText}
-                        analyzedFiles={analyzedFiles}
-                        selectedFileIds={selectedFileIds}
-                        viewMode={viewMode}
                         onConnectCodesChange={setConnectCodes}
                         onFilterTextChange={setFilterText}
                         onSelectAll={selectAll}
@@ -392,7 +383,6 @@ const Body: React.FC<{}> = () => {
                         onToggleViewMode={() => setViewMode(viewMode === "all" ? "selected" : "all")}
                         onDeleteSelected={deleteSelectedFiles}
                         onRegenerateAnalysis={loadResults}
-                        onToggleSelection={toggleFileSelection}
                     />
                 );
 
@@ -412,14 +402,16 @@ const Body: React.FC<{}> = () => {
     };
 
     return (
-        <>
+        <div className="flex flex-1 min-h-0">
             <TabNavigation
                 currentPage={currentPage}
                 showIntro={showIntro}
                 onPageChange={handlePageChange}
             />
-            {renderCurrentPage()}
-        </>
+            <div className="flex-1 overflow-auto">
+                {renderCurrentPage()}
+            </div>
+        </div>
     );
 };
 

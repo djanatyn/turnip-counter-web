@@ -17,31 +17,28 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
   const tabs = [
     ...(showIntro ? [{ page: Page.Intro, label: "Intro" }] : []),
     { page: Page.Library, label: "Library" },
-    { page: Page.Filtering, label: "Filtering" },
     { page: Page.Analysis, label: "Analysis" },
   ];
 
   return (
-    <nav className="border-b">
-      <div className="max-w-4xl mx-auto px-8">
-        <div className="flex gap-1">
-          {tabs.map(({ page, label }) => (
-            <button
-              key={page}
-              onClick={() => onPageChange(page)}
-              className={`
-                px-6 py-4 font-medium transition-colors
-                ${
-                  currentPage === page
-                    ? "border-b-2 border-current"
-                    : "opacity-60 hover:opacity-100"
-                }
-              `}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+    <nav className="border-r w-48 flex-shrink-0">
+      <div className="p-4 space-y-2">
+        {tabs.map(({ page, label }) => (
+          <button
+            key={page}
+            onClick={() => onPageChange(page)}
+            className={`
+              w-full px-4 py-3 rounded text-left font-medium transition-colors
+              ${
+                currentPage === page
+                  ? "bg-opacity-10 bg-current"
+                  : "opacity-60 hover:opacity-100 hover:bg-opacity-5 hover:bg-current"
+              }
+            `}
+          >
+            {label}
+          </button>
+        ))}
       </div>
     </nav>
   );

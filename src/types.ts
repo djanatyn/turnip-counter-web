@@ -14,11 +14,8 @@ export type GameRecord = {
 export enum Page {
   /// Introduce the user to the tool and tell them what to expect.
   Intro,
-  /// Add replay directories, scan for new files, run pending analysis, remove
-  /// files from library.
+  /// Upload files, filter games, and manage selections
   Library,
-  /// Filter games by connect codes and manage selections
-  Filtering,
   /// View analysis results and visualizations
   Analysis,
 }
